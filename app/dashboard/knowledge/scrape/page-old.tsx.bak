@@ -1,0 +1,420 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useWorkspace } from '@/contexts/WorkspaceContext';
+import { knowledgeBaseAPI, scraperAPI } from '@/lib/api';
+import { io, Socket } from 'socket.io-client';
+import { 
+  RiGlobalLine,
+  RiArrowLeftLine,
+  RiPlayLine,
+  RiCheckLine,
+  RiErrorWarningLine,
+  RiLoader4Line
+} from '@remixicon/react';
+
+interface ScrapedPage {
+  url: string;
+  title: string;
+  status: 'pending' | 'success' | 'error';
+  error?: string;
+}
+
+export default function ScrapePage() {
+  const router = useRouter();
+  const { selectedWorkspace } = useWorkspace();
+  const [knowledgeBases, setKnowledgeBases] = useState<any[]>([]);
+  const [selectedKB, setSelectedKB] = useState('');
+  const [scrapeMode, setScrapeMode] = useState<'single' | 'website'>('single');
+  const [url, setUrl] = useState('');
+  const [maxPages, setMaxPages] = useState(0); // 0 = unlimited
+  const [isLoading, setIsLoading] = useState(false);
+  const [scrapedPages, setScrapedPages] = useState<ScrapedPage[]>([]);
+  const [progress, setProgress] = useState({ current: 0, total: 0 });
+  const [socket, setSocket] = useState<Socket | null>(null);
+
+  useEffect(() => {
+    if (selectedWorkspace) {
+      loadKnowledgeBases();
+    }
+  }, [selectedWorkspace]);
+  
+  // Setup Socket.IO for real-time updates
+  useEffect(() => {
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+    const socketInstance = io(API_URL, {
+      withCredentials: true,
+      transports: ['websocket', 'polling'],
+    });
+    
+    socketInstance.on('connect', () => {
+      console.log('Socket.IO connected');
+    });
+    
+    socketInstance.on('scraper:progress', (data: any) => {
+      console.log('Scraper progress:', data);
+      
+      if (data.status === 'scraping') {
+        setScrapedPages(prev => [
+          ...prev,
+          {
+            url: data.url,
+            title: data.title,
+            status: 'success',
+          },
+        ]);
+        setProgress({
+          current: data.scraped,
+          total: typeof data.total === 'number' ? data.total : data.scraped,
+        });
+      } else if (data.status === 'error') {
+        setScrapedPages(prev => [
+          ...prev,
+          {
+            url: data.url,
+            title: 'Failed',
+            status: 'error',
+            error: data.error,
+          },
+        ]);
+      } else if (data.status === 'completed') {
+        setIsLoading(false);
+        setProgress({
+          current: data.scraped,
+          total: data.scraped,
+        });
+      }
+    });
+    
+    setSocket(socketInstance);
+    
+    return () => {
+      socketInstance.disconnect();
+    };
+  }, []);
+
+  const loadKnowledgeBases = async () => {
+    if (!selectedWorkspace) return;
+
+    try {
+      const data = await knowledgeBaseAPI.getWorkspaceKBs(selectedWorkspace.id);
+      setKnowledgeBases(data || []);
+      if (data && data.length > 0) {
+        setSelectedKB(data[0].id);
+      }
+    } catch (err: any) {
+      console.error('Failed to load knowledge bases:', err);
+    }
+  };
+
+  const handleScrapeSingle = async () => {
+    if (!selectedKB || !url) return;
+    if (!selectedWorkspace) return;
+
+    setIsLoading(true);
+    setScrapedPages([{ url, title: 'Scraping...', status: 'pending' }]);
+
+    try {
+      const result = await scraperAPI.scrapeUrl(url, selectedKB);
+      
+      setScrapedPages([{
+        url,
+        title: result.title || 'Untitled',
+        status: 'success',
+      }]);
+    } catch (err: any) {
+      console.error('Scraping failed:', err);
+      setScrapedPages([{
+        url,
+        title: 'Failed',
+        status: 'error',
+        error: err.message,
+      }]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleScrapeWebsite = async () => {
+    if (!selectedKB || !url) return;
+    if (!selectedWorkspace) return;
+
+    setIsLoading(true);
+    setScrapedPages([]);
+    setProgress({ current: 0, total: maxPages || 0 });
+
+    try {
+      // Start scraping - backend will send real-time updates via Socket.IO
+      await scraperAPI.scrapeWebsite(url, selectedKB, maxPages);
+      // Progress updates will come through Socket.IO
+    } catch (err: any) {
+      console.error('Website scraping failed:', err);
+      alert(err.message || 'Failed to scrape website');
+      setIsLoading(false);
+    }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (scrapeMode === 'single') {
+      handleScrapeSingle();
+    } else {
+      handleScrapeWebsite();
+    }
+  };
+
+  const successCount = scrapedPages.filter(p => p.status === 'success').length;
+  const errorCount = scrapedPages.filter(p => p.status === 'error').length;
+
+  return (
+    <div className="p-8">
+      {/* Header */}
+      <div className="mb-8">
+        <button
+          onClick={() => router.push('/dashboard/knowledge')}
+          className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-4"
+        >
+          <RiArrowLeftLine size={20} />
+          Back to Knowledge Base
+        </button>
+        <h1 className="text-3xl font-bold text-foreground mb-2">Scrape Website</h1>
+        <p className="text-muted-foreground">
+          Import content from websites automatically into your knowledge base
+        </p>
+      </div>
+
+      <div className="max-w-4xl">
+        {/* Configuration Form */}
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Knowledge Base Selection */}
+          <div className="bg-card border border-border rounded-lg p-6">
+            <label className="block text-sm font-medium text-foreground mb-2">
+              Select Knowledge Base *
+            </label>
+            {knowledgeBases.length === 0 ? (
+              <div className="text-sm text-muted-foreground">
+                No knowledge bases found. 
+                <button
+                  type="button"
+                  onClick={() => router.push('/dashboard/knowledge')}
+                  className="text-primary hover:underline ml-1"
+                >
+                  Create one first
+                </button>
+              </div>
+            ) : (
+              <select
+                value={selectedKB}
+                onChange={(e) => setSelectedKB(e.target.value)}
+                className="w-full px-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-foreground"
+                required
+              >
+                {knowledgeBases.map(kb => (
+                  <option key={kb.id} value={kb.id}>{kb.name}</option>
+                ))}
+              </select>
+            )}
+          </div>
+
+          {/* Scrape Mode */}
+          <div className="bg-card border border-border rounded-lg p-6">
+            <label className="block text-sm font-medium text-foreground mb-3">
+              Scraping Mode *
+            </label>
+            <div className="grid grid-cols-2 gap-4">
+              <button
+                type="button"
+                onClick={() => setScrapeMode('single')}
+                className={`p-4 rounded-lg border-2 transition-all text-left ${
+                  scrapeMode === 'single'
+                    ? 'border-primary bg-primary/5'
+                    : 'border-border hover:border-primary/50'
+                }`}
+              >
+                <h3 className="font-semibold text-foreground mb-1">Single Page</h3>
+                <p className="text-sm text-muted-foreground">
+                  Scrape content from a single URL
+                </p>
+              </button>
+              <button
+                type="button"
+                onClick={() => setScrapeMode('website')}
+                className={`p-4 rounded-lg border-2 transition-all text-left ${
+                  scrapeMode === 'website'
+                    ? 'border-primary bg-primary/5'
+                    : 'border-border hover:border-primary/50'
+                }`}
+              >
+                <h3 className="font-semibold text-foreground mb-1">Entire Website</h3>
+                <p className="text-sm text-muted-foreground">
+                  Crawl and scrape multiple pages automatically
+                </p>
+              </button>
+            </div>
+          </div>
+
+          {/* URL Input */}
+          <div className="bg-card border border-border rounded-lg p-6">
+            <label className="block text-sm font-medium text-foreground mb-2">
+              {scrapeMode === 'single' ? 'Page URL *' : 'Website Base URL *'}
+            </label>
+            <div className="relative">
+              <RiGlobalLine size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <input
+                type="url"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                placeholder={scrapeMode === 'single' ? 'https://example.com/page' : 'https://example.com'}
+                className="w-full pl-10 pr-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-foreground"
+                required
+              />
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              {scrapeMode === 'single' 
+                ? 'Enter the complete URL of the page you want to scrape'
+                : 'Enter the base URL - the scraper will crawl pages within this domain'}
+            </p>
+          </div>
+
+          {/* Max Pages (Website mode only) */}
+          {scrapeMode === 'website' && (
+            <div className="bg-card border border-border rounded-lg p-6">
+              <label className="block text-sm font-medium text-foreground mb-2">
+                Maximum Pages
+              </label>
+              <input
+                type="number"
+                value={maxPages}
+                onChange={(e) => setMaxPages(parseInt(e.target.value) || 0)}
+                min={0}
+                placeholder="0 voor ongelimiteerd"
+                className="w-full px-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-foreground"
+              />
+              <p className="text-xs text-muted-foreground mt-2">
+                Aantal pagina's om te scrapen (0 = ongelimiteerd, maximum wordt bepaald door website structuur)
+              </p>
+            </div>
+          )}
+
+          {/* Submit Button */}
+          <button
+            type="submit"
+            disabled={!selectedKB || !url || isLoading}
+            className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium disabled:opacity-50"
+          >
+            {isLoading ? (
+              <>
+                <RiLoader4Line size={20} className="animate-spin" />
+                Scraping...
+              </>
+            ) : (
+              <>
+                <RiPlayLine size={20} />
+                Start Scraping
+              </>
+            )}
+          </button>
+        </form>
+
+        {/* Progress */}
+        {isLoading && scrapeMode === 'website' && (
+          <div className="mt-6 bg-card border border-border rounded-lg p-6">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-foreground">Scraping Progress</span>
+              <span className="text-sm text-muted-foreground">
+                {progress.current} {maxPages === 0 ? 'pagina\'s gescraped' : `/ ${progress.total} pages`}
+              </span>
+            </div>
+            <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+              <div
+                className="h-full bg-primary transition-all"
+                style={{ 
+                  width: maxPages === 0 
+                    ? '100%' 
+                    : `${progress.total > 0 ? (progress.current / progress.total) * 100 : 0}%` 
+                }}
+              ></div>
+            </div>
+          </div>
+        )}
+
+        {/* Results */}
+        {scrapedPages.length > 0 && (
+          <div className="mt-6 bg-card border border-border rounded-lg overflow-hidden">
+            <div className="p-4 bg-muted/50 border-b border-border">
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold text-foreground">
+                  Scraped Pages ({scrapedPages.length})
+                </h3>
+                <div className="flex items-center gap-4 text-sm">
+                  <span className="text-green-600 dark:text-green-400">
+                    ✓ {successCount} success
+                  </span>
+                  {errorCount > 0 && (
+                    <span className="text-red-600 dark:text-red-400">
+                      ✗ {errorCount} failed
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="divide-y divide-border max-h-96 overflow-y-auto">
+              {scrapedPages.map((page, index) => (
+                <div key={index} className="p-4 flex items-start gap-3">
+                  <div className="flex-shrink-0 mt-1">
+                    {page.status === 'pending' && (
+                      <RiLoader4Line size={20} className="text-muted-foreground animate-spin" />
+                    )}
+                    {page.status === 'success' && (
+                      <RiCheckLine size={20} className="text-green-500" />
+                    )}
+                    {page.status === 'error' && (
+                      <RiErrorWarningLine size={20} className="text-red-500" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-sm font-medium text-foreground mb-1">
+                      {page.title}
+                    </h4>
+                    <p className="text-xs text-muted-foreground truncate mb-1">
+                      {page.url}
+                    </p>
+                    {page.error && (
+                      <p className="text-xs text-red-500 mt-1">
+                        {page.error}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Success Message */}
+        {!isLoading && successCount > 0 && (
+          <div className="mt-6 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg p-4">
+            <div className="flex items-center gap-3">
+              <RiCheckLine size={20} className="text-green-600 dark:text-green-400" />
+              <div className="flex-1">
+                <p className="font-medium text-green-700 dark:text-green-300">
+                  Successfully scraped {successCount} page{successCount !== 1 ? 's' : ''}!
+                </p>
+                <p className="text-sm text-green-600 dark:text-green-400 mt-1">
+                  Content has been added to your knowledge base
+                </p>
+              </div>
+              <button
+                onClick={() => router.push('/dashboard/knowledge/documents')}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium text-sm"
+              >
+                View Documents
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

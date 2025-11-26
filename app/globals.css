@@ -1,0 +1,407 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  /* Modern Light Theme - Gebaseerd op Tasky */
+  --background: #fafafa;
+  --foreground: #18181b;
+  
+  --card: #ffffff;
+  --card-foreground: #18181b;
+  
+  --popover: #ffffff;
+  --popover-foreground: #18181b;
+  
+  --primary: #001aff;
+  --primary-foreground: #ffffff;
+  
+  --secondary: #f4f4f5;
+  --secondary-foreground: #18181b;
+  
+  --muted: #f4f4f5;
+  --muted-foreground: #71717a;
+  
+  --accent: #001aff;
+  --accent-foreground: #ffffff;
+  
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  
+  --border: #e4e4e7;
+  --input: #ffffff;
+  --ring: #001aff;
+  
+  /* Kleurrijke status colors zoals Tasky */
+  --chart-1: #001aff;
+  --chart-2: #8b5cf6;
+  --chart-3: #ec4899;
+  --chart-4: #f59e0b;
+  --chart-5: #10b981;
+  
+  --status-todo: #e4e4e7;
+  --status-inwork: #ddd6fe;
+  --status-review: #fed7aa;
+  --status-done: #bbf7d0;
+  
+  --sidebar: #ffffff;
+  --sidebar-foreground: #71717a;
+  --sidebar-primary: #001aff;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f4f4f5;
+  --sidebar-accent-foreground: #18181b;
+  --sidebar-border: #e4e4e7;
+  --sidebar-ring: #001aff;
+  
+  --header: #ffffff;
+  --header-foreground: #18181b;
+  
+  --footer: #ffffff;
+  --footer-foreground: #18181b;
+  
+  --code: #f4f4f5;
+  --code-foreground: #18181b;
+  --code-highlight: #001aff;
+  --code-number: #8b5cf6;
+  --code-selection: #e4e4e7;
+  --code-border: #e4e4e7;
+  
+  /* Node colors voor workflow */
+  --node-bg: #ffffff;
+  --node-border: #e4e4e7;
+  --node-hover: #f4f4f5;
+  --node-active: #001aff;
+  
+  /* Canvas */
+  --canvas-bg: #fafafa;
+  --canvas-grid: #f4f4f5;
+  
+  --radius: 0.75rem;
+}
+
+/* Local font registration: TWK Lausanne. We register a small set of weights + italics
+   using the woff2 files in `/public/fonts`. Add more weights if needed. */
+@font-face {
+  font-family: 'TWK Lausanne';
+  src: url('/fonts/TWKLausanne-400.woff2') format('woff2'),
+       url('/fonts/TWKLausanne-400.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'TWK Lausanne';
+  src: url('/fonts/TWKLausanne-600.woff2') format('woff2'),
+       url('/fonts/TWKLausanne-600.woff') format('woff');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'TWK Lausanne';
+  src: url('/fonts/TWKLausanne-700.woff2') format('woff2'),
+       url('/fonts/TWKLausanne-700.woff') format('woff');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'TWK Lausanne';
+  src: url('/fonts/TWKLausanne-400Italic.woff2') format('woff2'),
+       url('/fonts/TWKLausanne-400Italic.woff') format('woff');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'TWK Lausanne';
+  src: url('/fonts/TWKLausanne-700Italic.woff2') format('woff2'),
+       url('/fonts/TWKLausanne-700Italic.woff') format('woff');
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* Set the project's default font variables to use the local font. The project
+   previously used next/font/google and set `--font-geist-sans`; we replace the
+   default so components using `--font-sans` continue to work. */
+:root {
+  --font-geist-sans: 'TWK Lausanne', ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  --font-geist-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", "Courier New", monospace;
+}
+
+/* Dark mode disabled - using light theme only
+.dark {
+  --background: #18181b;
+  --foreground: #fafafa;
+  --card: #27272a;
+  --card-foreground: #fafafa;
+  --popover: #27272a;
+  --popover-foreground: #fafafa;
+  --primary: #7c3aed;
+  --primary-foreground: #ffffff;
+  --secondary: #3f3f46;
+  --secondary-foreground: #fafafa;
+  --muted: #3f3f46;
+  --muted-foreground: #a1a1aa;
+  --accent: #7c3aed;
+  --accent-foreground: #ffffff;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #3f3f46;
+  --input: #27272a;
+  --ring: #7c3aed;
+  --chart-1: #7c3aed;
+  --chart-2: #a855f7;
+  --chart-3: #ec4899;
+  --chart-4: #f59e0b;
+  --chart-5: #10b981;
+  --status-todo: #3f3f46;
+  --status-inwork: #5b21b6;
+  --status-review: #ea580c;
+  --status-done: #15803d;
+  --sidebar: #18181b;
+  --sidebar-foreground: #a1a1aa;
+  --sidebar-primary: #7c3aed;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #27272a;
+  --sidebar-accent-foreground: #fafafa;
+  --sidebar-border: #3f3f46;
+  --sidebar-ring: #7c3aed;
+  --header: #18181b;
+  --header-foreground: #fafafa;
+  --footer: #18181b;
+  --footer-foreground: #fafafa;
+  --code: #27272a;
+  --code-foreground: #fafafa;
+  --code-highlight: #7c3aed;
+  --code-number: #a855f7;
+  --code-selection: #3f3f46;
+  --code-border: #3f3f46;
+  --node-bg: #27272a;
+  --node-border: #3f3f46;
+  --node-hover: #3f3f46;
+  --node-active: #7c3aed;
+  --canvas-bg: #18181b;
+  --canvas-grid: #27272a;
+  --radius: 0.75rem;
+}
+*/
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@layer components {
+  /* Modern UI Components */
+  
+  /* Buttons */
+  .btn-primary {
+    @apply px-4 py-2 rounded-lg font-medium transition-all;
+    background-color: var(--primary);
+    color: var(--primary-foreground);
+  }
+  
+  .btn-primary:hover {
+    @apply opacity-90;
+  }
+  
+  .btn-secondary {
+    @apply px-4 py-2 rounded-lg font-medium transition-all;
+    background-color: var(--secondary);
+    color: var(--secondary-foreground);
+    border: 1px solid var(--border);
+  }
+  
+  .btn-secondary:hover {
+    background-color: var(--muted);
+  }
+  
+  /* Cards */
+  .card {
+    @apply rounded-xl p-4 border transition-all;
+    background-color: var(--card);
+    border-color: var(--border);
+  }
+  
+  .card:hover {
+    border-color: var(--primary);
+  }
+  
+  /* Input fields */
+  .input {
+    @apply w-full px-3 py-2 rounded-lg border transition-all;
+    background-color: var(--input);
+    border-color: var(--border);
+    color: var(--foreground);
+  }
+  
+  .input:focus {
+    outline: none;
+    border-color: var(--ring);
+  }
+  
+  /* Topbar */
+  .topbar {
+    @apply h-14 border-b px-6 flex items-center justify-between;
+    background-color: var(--header);
+    border-color: var(--border);
+  }
+  
+  /* Sidebar */
+  .sidebar {
+    @apply fixed left-0 top-0 h-screen w-16 border-r flex flex-col items-center py-4 gap-2;
+    background-color: var(--sidebar);
+    border-color: var(--sidebar-border);
+  }
+  
+  .sidebar-icon {
+    @apply w-10 h-10 flex items-center justify-center rounded-lg transition-all cursor-pointer;
+    color: var(--sidebar-foreground);
+  }
+  
+  .sidebar-icon:hover {
+    background-color: var(--sidebar-accent);
+    color: var(--sidebar-accent-foreground);
+  }
+  
+  .sidebar-icon.active {
+    background-color: var(--sidebar-primary);
+    color: var(--sidebar-primary-foreground);
+  }
+  
+  .sidebar-item {
+    @apply flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-colors cursor-pointer;
+    color: var(--sidebar-foreground);
+  }
+  
+  .sidebar-item:hover {
+    background-color: var(--sidebar-accent);
+    color: var(--sidebar-accent-foreground);
+  }
+  
+  .sidebar-item.active {
+    background-color: var(--sidebar-primary);
+    color: var(--sidebar-primary-foreground);
+  }
+  
+  /* Right Panel */
+  .right-panel {
+    @apply fixed right-0 top-0 h-screen w-80 border-l flex flex-col;
+    background-color: var(--card);
+    border-color: var(--border);
+  }
+  
+  /* Search */
+  .search-bar {
+    @apply flex items-center gap-2 px-3 py-2 rounded-lg;
+    background-color: var(--input);
+    border: 1px solid var(--border);
+  }
+  
+  .search-bar input {
+    @apply bg-transparent border-0 outline-none flex-1;
+    color: var(--foreground);
+  }
+  
+  .search-bar input::placeholder {
+    color: var(--muted-foreground);
+  }
+  
+  /* Menu Item */
+  .menu-item {
+    @apply flex items-center gap-3 px-3 py-2 rounded-lg transition-all cursor-pointer;
+    color: var(--foreground);
+  }
+  
+  .menu-item:hover {
+    background-color: var(--muted);
+  }
+  
+  /* Divider */
+  .divider {
+    @apply h-px w-full;
+    background-color: var(--border);
+  }
+  
+  /* Badge */
+  .badge {
+    @apply px-2 py-1 rounded text-xs font-medium;
+    background-color: var(--muted);
+    color: var(--muted-foreground);
+  }
+  
+  /* Scrollbar styling */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: var(--background);
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 4px;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: var(--muted);
+  }
+}
+
+/* Layout helper: content area respects sidebar width. When the html/document has
+   the `sidebar-collapsed` class set (toggled by the Sidebar component), shrink
+   the left margin so Topbar and main content align with the collapsed sidebar. */
+.content {
+  margin-left: 16rem; /* 256px when sidebar expanded */
+  transition: margin-left 200ms ease;
+}
+.sidebar-collapsed .content {
+  margin-left: 5rem; /* 80px when sidebar collapsed */
+}
