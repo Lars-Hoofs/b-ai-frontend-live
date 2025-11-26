@@ -170,7 +170,7 @@ export function ManageMembersModal({ isOpen, onClose, team }: ManageMembersModal
                   onClick={() => {
                     setShowInviteForm(false);
                     setInviteEmail('');
-                    setInviteRole('member');
+                    setInviteRole('MEMBER');
                   }}
                   className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >

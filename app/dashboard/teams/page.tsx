@@ -281,7 +281,7 @@ export default function TeamsPage() {
               </div>
 
               {/* Menu */}
-              <div className="relative" ref={(el) => menuRefs.current[team.id] = el}>
+              <div className="relative" ref={(el) => { menuRefs.current[team.id] = el; }}>
                 <button
                   onClick={(e) => {
                     e.stopPropagation();

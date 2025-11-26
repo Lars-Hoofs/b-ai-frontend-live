@@ -97,7 +97,6 @@ export function EditTeamModal({ isOpen, onClose, onSubmit, team }: EditTeamModal
       onSubmit({ 
         name: name.trim(), 
         description: description.trim(),
-        slug: slug.trim() || undefined,
       });
     } finally {
       setIsSubmitting(false);

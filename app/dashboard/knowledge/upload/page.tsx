@@ -48,7 +48,7 @@ export default function UploadPage() {
       
       // Pre-select KB from query param if available
       const kbParam = searchParams.get('kb');
-      if (kbParam && data?.some(kb => kb.id === kbParam)) {
+      if (kbParam && data?.some((kb: any) => kb.id === kbParam)) {
         setSelectedKB(kbParam);
       } else if (data && data.length > 0) {
         setSelectedKB(data[0].id);

@@ -1,14 +1,34 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { authClient, useSession as useBetterAuthSession } from '@/lib/auth-client';
 
-const AuthContext = createContext({});
+interface User {
+  id: string;
+  email: string;
+  name?: string;
+  role?: string;
+  // Add other user properties as needed
+}
 
-export function AuthProvider({ children }) {
+interface AuthContextType {
+  user: User | null;
+  login: (email: string, password: string) => Promise<any>;
+  logout: () => Promise<void>;
+  isAuthenticated: boolean;
+  loading: boolean;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+interface AuthProviderProps {
+  children: ReactNode;
+}
+
+export function AuthProvider({ children }: AuthProviderProps) {
   // Use Better Auth's built-in session hook
   const { data: sessionData, isPending } = useBetterAuthSession();
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Sync user state with Better Auth session
@@ -23,7 +43,7 @@ export function AuthProvider({ children }) {
     }
   }, [sessionData, isPending]);
 
-  const login = async (email, password) => {
+  const login = async (email: string, password: string) => {
     try {
       const response = await authClient.signIn.email({
         email,
@@ -81,7 +101,7 @@ export function AuthProvider({ children }) {
   );
 }
 
-export function useAuth() {
+export function useAuth(): AuthContextType {
   const context = useContext(AuthContext);
   if (!context) {
     throw new Error('useAuth moet gebruikt worden binnen een AuthProvider');

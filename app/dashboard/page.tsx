@@ -218,7 +218,7 @@ export default function DashboardPage() {
       
       setStats({
         totalAgents: agents.status === 'fulfilled' ? agents.value?.length || 0 : 0,
-        activeWorkflows: workflows.status === 'fulfilled' ? workflows.value?.filter(w => w.isActive).length || 0 : 0,
+        activeWorkflows: workflows.status === 'fulfilled' ? workflows.value?.filter((w: any) => w.isActive).length || 0 : 0,
         totalWidgets: widgets.status === 'fulfilled' ? widgets.value?.length || 0 : 0,
         totalConversations: conversations.status === 'fulfilled' ? conversations.value?.length || 0 : 0,
       });

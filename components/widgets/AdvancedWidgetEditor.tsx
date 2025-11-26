@@ -896,7 +896,7 @@ function StylingTab({ config, updateConfig }: { config: WidgetConfig; updateConf
           />
           <ColorInput
             label="Bot Tekst"
-            value={config.botMessageTextColor || config.messageTextColor}
+            value={config.botMessageTextColor || '#1f2937'}
             onChange={(botMessageTextColor) => updateConfig({ botMessageTextColor })}
           />
         </div>

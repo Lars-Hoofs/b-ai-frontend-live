@@ -28,6 +28,7 @@ interface ScrapeJob {
   scrapedCount: number;
   failedCount: number;
   createdAt: string;
+  errorMessage?: string;
 }
 
 export default function ScrapePage() {

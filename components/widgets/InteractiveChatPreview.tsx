@@ -32,14 +32,14 @@ export function InteractiveChatPreview({ config }: InteractiveChatPreviewProps) 
           initial: { opacity: 0, y: 20, scale: 0.95 },
           animate: { opacity: 1, y: 0, scale: 1 },
           exit: { opacity: 0, y: 20, scale: 0.95 },
-          transition: { duration, ease: 'easeOut' },
+          transition: { duration, ease: 'easeOut' as const },
         };
       case 'slide-down':
         return {
           initial: { opacity: 0, y: -20, scale: 0.95 },
           animate: { opacity: 1, y: 0, scale: 1 },
           exit: { opacity: 0, y: -20, scale: 0.95 },
-          transition: { duration, ease: 'easeOut' },
+          transition: { duration, ease: 'easeOut' as const },
         };
       case 'fade':
         return {
@@ -53,7 +53,7 @@ export function InteractiveChatPreview({ config }: InteractiveChatPreviewProps) 
           initial: { opacity: 0, scale: 0.8 },
           animate: { opacity: 1, scale: 1 },
           exit: { opacity: 0, scale: 0.8 },
-          transition: { duration, ease: [0.34, 1.56, 0.64, 1] },
+          transition: { duration, ease: [0.34, 1.56, 0.64, 1] as [number, number, number, number] },
         };
       case 'none':
       default:
@@ -355,7 +355,7 @@ export function InteractiveChatPreview({ config }: InteractiveChatPreviewProps) 
                             padding: '10px 14px',
                             borderRadius: `${config.messageBorderRadius}px`,
                             backgroundColor: msg.isUser ? config.userMessageColor : config.botMessageColor,
-                            color: config.messageTextColor,
+                            color: msg.isUser ? (config.userMessageTextColor || '#ffffff') : (config.botMessageTextColor || '#1f2937'),
                             fontSize: '14px',
                             lineHeight: 1.5,
                           }}

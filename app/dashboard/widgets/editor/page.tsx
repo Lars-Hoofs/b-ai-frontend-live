@@ -23,7 +23,7 @@ const DEFAULT_CONFIG: WidgetConfig = {
   headerTextColor: '#ffffff',
   userMessageColor: '#6366f1',
   botMessageColor: '#f3f4f6',
-  messageTextColor: '#1f2937',
+  botMessageTextColor: '#1f2937',
   chatWidth: 400,
   chatHeight: 600,
   chatBorderRadius: 16,

@@ -25,7 +25,7 @@ export function AnimatedWidgetPreview({ config }: AnimatedWidgetPreviewProps) {
     const baseTransition = {
       duration,
       delay,
-      ease: type === 'bounce' ? [0.68, -0.55, 0.265, 1.55] : 'easeOut',
+      ease: type === 'bounce' ? [0.68, -0.55, 0.265, 1.55] as [number, number, number, number] : 'easeOut' as const,
     };
 
     switch (type) {

@@ -27,7 +27,7 @@ const DEFAULT_CONFIG: WidgetConfig = {
   headerTextColor: '#ffffff',
   userMessageColor: '#6366f1',
   botMessageColor: '#f3f4f6',
-  messageTextColor: '#1f2937',
+  botMessageTextColor: '#1f2937',
   chatWidth: 400,
   chatHeight: 600,
   chatBorderRadius: 16,
@@ -109,7 +109,7 @@ export function CreateWidgetModal({ isOpen, onClose, onSubmit, workspaceId }: Cr
         // Messages
         userMessageColor: config.userMessageColor,
         botMessageColor: config.botMessageColor,
-        messageTextColor: config.messageTextColor,
+        botMessageTextColor: config.botMessageTextColor,
         messageBorderRadius: config.messageBorderRadius,
         
         // Behavior
@@ -140,7 +140,7 @@ export function CreateWidgetModal({ isOpen, onClose, onSubmit, workspaceId }: Cr
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Nieuwe Widget Aanmaken" size="full">
+    <Modal isOpen={isOpen} onClose={handleClose} title="Nieuwe Widget Aanmaken" size="xl">
       <form onSubmit={handleSubmit} className="h-full flex flex-col">
         {/* Header */}
         <div className="px-6 py-4 border-b border-border">

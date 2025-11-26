@@ -6,9 +6,15 @@ import { formatDistanceToNow } from '@/lib/date-utils';
 interface Conversation {
   id: string;
   userId: string | null;
+  agentId: string;
+  workspaceId: string;
   status: 'active' | 'waiting' | 'resolved';
   assignedToId: string | null;
   priority: 'low' | 'medium' | 'high' | 'urgent';
+  rating: number | null;
+  feedback: string | null;
+  startedAt: string;
+  resolvedAt: string | null;
   lastMessageAt: string;
   messageCount: number;
   currentPageUrl?: string | null;

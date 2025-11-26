@@ -207,7 +207,7 @@ export default function ConversationsPage() {
             </p>
           </div>
           <button
-            onClick={loadConversations}
+            onClick={() => loadConversations(true)}
             disabled={isRefreshing}
             className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium disabled:opacity-50"
           >
