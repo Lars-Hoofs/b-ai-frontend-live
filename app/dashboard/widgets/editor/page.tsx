@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { AdvancedWidgetEditor, WidgetConfig } from '@/components/widgets/AdvancedWidgetEditor';
 import { WidgetLivePreview } from '@/components/widgets/WidgetLivePreview';
@@ -34,7 +34,7 @@ const DEFAULT_CONFIG: WidgetConfig = {
   zIndex: 999999,
 };
 
-export default function WidgetEditorPage() {
+function WidgetEditor() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const widgetId = searchParams.get('id');
@@ -536,5 +536,24 @@ export default function WidgetEditorPage() {
         </div>
       )}
     </div>
+  );
+}
+
+function LoadingFallback() {
+  return (
+    <div className="h-screen flex items-center justify-center">
+      <div className="text-center">
+        <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+        <p className="text-muted-foreground">Loading widget editor...</p>
+      </div>
+    </div>
+  );
+}
+
+export default function WidgetEditorPage() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <WidgetEditor />
+    </Suspense>
   );
 }

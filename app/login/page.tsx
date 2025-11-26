@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Script from 'next/script'; // Import Next.js Script
@@ -8,7 +8,7 @@ import { motion } from 'framer-motion';
 import { RiArrowLeftLine } from '@remixicon/react';
 import { useAuth } from '@/contexts/AuthContext';
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login: contextLogin } = useAuth();
@@ -156,5 +156,33 @@ export default function LoginPage() {
         </div>
       </motion.div>
     </div>
+  );
+}
+
+function LoadingFallback() {
+  return (
+    <div className="min-h-screen w-full bg-[#09090b] text-white flex flex-col items-center justify-center relative overflow-hidden p-4">
+      <div className="w-full max-w-md z-10">
+        <div className="flex justify-center mb-6">
+          <div className="w-12 h-12 bg-zinc-900/80 backdrop-blur-md rounded-xl flex items-center justify-center border border-zinc-700 shadow-2xl">
+            <div className="w-6 h-6 rounded-full border-2 border-dashed border-zinc-400 animate-spin" />
+          </div>
+        </div>
+        <div className="text-center">
+          <div className="animate-pulse space-y-4">
+            <div className="h-4 bg-zinc-800 rounded w-48 mx-auto"></div>
+            <div className="h-4 bg-zinc-800 rounded w-32 mx-auto"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <LoginForm />
+    </Suspense>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
 import { knowledgeBaseAPI } from '@/lib/api';
@@ -22,7 +22,7 @@ interface UploadedFile {
   error?: string;
 }
 
-export default function UploadPage() {
+function UploadComponent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { selectedWorkspace } = useWorkspace();
@@ -358,5 +358,28 @@ export default function UploadPage() {
         )}
       </div>
     </div>
+  );
+}
+
+function LoadingFallback() {
+  return (
+    <div className="p-8">
+      <div className="animate-pulse space-y-8">
+        <div className="h-8 bg-muted rounded w-1/4"></div>
+        <div className="h-4 bg-muted rounded w-1/2"></div>
+        <div className="max-w-4xl space-y-6">
+          <div className="h-24 bg-muted rounded-lg"></div>
+          <div className="h-64 bg-muted rounded-lg"></div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function UploadPage() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <UploadComponent />
+    </Suspense>
   );
 }
