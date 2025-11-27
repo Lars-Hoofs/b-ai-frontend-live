@@ -86,7 +86,7 @@ async function proxyRequest(request: NextRequest, pathArray: string[]) {
 
     console.log('[Proxy] Response status:', response.status);
     console.log('[Proxy] Response Set-Cookie:', response.headers.get('set-cookie'));
-    // console.log('[Proxy] Response body:', responseBody.substring(0, 200));
+    console.log('[Proxy] Response body:', responseBody.substring(0, 500)); // Log detailed error from backend
 
     // Create response with same status and headers
     const nextResponse = new NextResponse(responseBody, {
