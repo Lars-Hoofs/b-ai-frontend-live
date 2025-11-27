@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const BACKEND_URL = 'https://api.bonsaimedia.nl/';
+const BACKEND_URL = 'https://api.bonsaimedia.nl';
 
 export async function GET(
   request: NextRequest,
