@@ -38,11 +38,21 @@ function VerifyEmailContent() {
       setMessage("Bezig met verifiëren van je e-mailadres...");
 
       try {
-        // Better Auth backend route – pas eventueel aan naar jouw exacte endpoint
-        await apiRequest("/api/auth/verify-email", {
-          method: "POST",
-          body: JSON.stringify({ token }),
+        // Gebruik de echte Better Auth verify-email route (GET met query),
+        // en verwacht geen JSON maar alleen een status.
+        const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL as string) || "https://api.bonsaimedia.nl";
+        const url = new URL("/api/auth/verify-email", API_BASE_URL);
+        url.searchParams.set("token", token);
+        url.searchParams.set("callbackURL", "/");
+
+        const response = await fetch(url.toString(), {
+          method: "GET",
+          credentials: "include",
         });
+
+        if (!response.ok) {
+          throw new Error(`Verificatie mislukt (status ${response.status}).`);
+        }
 
         setStatus("success");
         setMessage("Je e-mailadres is succesvol geverifieerd! Je kunt nu inloggen.");
