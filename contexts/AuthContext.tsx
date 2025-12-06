@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { authClient, useSession as useBetterAuthSession } from '@/lib/auth-client';
+import { authClient } from '@/lib/auth-client';
 
 interface User {
   id: string;
@@ -26,22 +26,39 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  // Use Better Auth's built-in session hook
-  const { data: sessionData, isPending } = useBetterAuthSession();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Sync user state with Better Auth session
-  useEffect(() => {
-    if (!isPending) {
-      if (sessionData?.user) {
-        setUser(sessionData.user);
+  // Helper om de huidige gebruiker vanaf de backend op te halen via same-origin proxy
+  const fetchCurrentUser = async () => {
+    try {
+      const res = await fetch('/api/users/me', {
+        credentials: 'include',
+      });
+
+      if (!res.ok) {
+        setUser(null);
+        return;
+      }
+
+      const data = await res.json();
+      if (data && data.id) {
+        setUser(data);
       } else {
         setUser(null);
       }
-      setLoading(false);
+    } catch {
+      setUser(null);
     }
-  }, [sessionData, isPending]);
+  };
+
+  // Initieel: kijk of er al een sessie is
+  useEffect(() => {
+    (async () => {
+      await fetchCurrentUser();
+      setLoading(false);
+    })();
+  }, []);
 
   const login = async (email: string, password: string) => {
     try {
@@ -54,23 +71,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
         throw new Error(response.error.message || 'Login failed');
       }
       
-      // Force a manual session fetch after login to ensure user is set
+      // Even wachten tot cookies gezet zijn en daarna gebruiker ophalen via backend
       await new Promise(resolve => setTimeout(resolve, 200));
-      
-      // Manually fetch session after login
-      try {
-        const sessionResponse = await fetch('/api/auth/get-session', {
-          credentials: 'include'
-        });
-        
-        const sessionData = await sessionResponse.json();
-        if (sessionData?.user) {
-          setUser(sessionData.user);
-        }
-      } catch (err) {
-        // Session fetch failed - user might still be authenticated
-        // Let the useSession hook handle this
-      }
+      await fetchCurrentUser();
       
       return response;
     } catch (error) {
