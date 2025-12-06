@@ -38,10 +38,10 @@ function VerifyEmailContent() {
       setMessage("Bezig met verifiëren van je e-mailadres...");
 
       try {
-        // Gebruik de echte Better Auth verify-email route (GET met query),
-        // en verwacht geen JSON maar alleen een status.
-        const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL as string) || "https://api.bonsaimedia.nl";
-        const url = new URL("/api/auth/verify-email", API_BASE_URL);
+        // Roep Better Auth via hetzelfde domein aan als de frontend,
+        // zodat de sessie-cookie op ai.bonsaimedia.nl wordt gezet (net als bij login).
+        const origin = typeof window !== "undefined" ? window.location.origin : "";
+        const url = new URL("/api/auth/verify-email", origin || "http://localhost:3000");
         url.searchParams.set("token", token);
         url.searchParams.set("callbackURL", "/");
 
