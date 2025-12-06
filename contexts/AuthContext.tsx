@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { authClient } from '@/lib/auth-client';
+import { authClient, useSession as useBetterAuthSession } from '@/lib/auth-client';
 
 interface User {
   id: string;
@@ -26,39 +26,22 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
+  // Gebruik Better Auth's ingebouwde session hook als bron van waarheid
+  const { data: sessionData, isPending } = useBetterAuthSession();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Helper om de huidige gebruiker vanaf de backend op te halen via same-origin proxy
-  const fetchCurrentUser = async () => {
-    try {
-      const res = await fetch('/api/users/me', {
-        credentials: 'include',
-      });
-
-      if (!res.ok) {
-        setUser(null);
-        return;
-      }
-
-      const data = await res.json();
-      if (data && data.id) {
-        setUser(data);
+  // Sync user state met Better Auth session
+  useEffect(() => {
+    if (!isPending) {
+      if (sessionData?.user) {
+        setUser(sessionData.user as any);
       } else {
         setUser(null);
       }
-    } catch {
-      setUser(null);
-    }
-  };
-
-  // Initieel: kijk of er al een sessie is
-  useEffect(() => {
-    (async () => {
-      await fetchCurrentUser();
       setLoading(false);
-    })();
-  }, []);
+    }
+  }, [sessionData, isPending]);
 
   const login = async (email: string, password: string) => {
     try {
@@ -71,10 +54,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         throw new Error(response.error.message || 'Login failed');
       }
       
-      // Even wachten tot cookies gezet zijn en daarna gebruiker ophalen via backend
-      await new Promise(resolve => setTimeout(resolve, 200));
-      await fetchCurrentUser();
-      
+      // Better Auth zal de sessie-cookie zetten; de useSession-hook pakt dit automatisch op.
       return response;
     } catch (error) {
       throw error;
