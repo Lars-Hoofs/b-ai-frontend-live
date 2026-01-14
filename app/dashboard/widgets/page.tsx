@@ -73,12 +73,14 @@ export default function WidgetsPage() {
 
   const loadWidgets = async () => {
     if (!selectedWorkspace) return;
-    
+
     try {
       setIsLoading(true);
       setError(null);
       const data = await widgetAPI.getWorkspaceWidgets(selectedWorkspace.id);
-      setWidgets(data);
+      if (data) {
+        setWidgets(data);
+      }
     } catch (err: any) {
       console.error('Failed to load widgets:', err);
       setError(err.message || 'Failed to load widgets');
@@ -90,7 +92,7 @@ export default function WidgetsPage() {
 
   const handleToggleWidget = async (widgetId: string, currentStatus: boolean) => {
     if (!selectedWorkspace) return;
-    
+
     try {
       await widgetAPI.toggle(widgetId, selectedWorkspace.id, !currentStatus);
       setWidgets(widgets.map(w => w.id === widgetId ? { ...w, isActive: !currentStatus } : w));
@@ -104,7 +106,7 @@ export default function WidgetsPage() {
   const handleDeleteWidget = async (widgetId: string) => {
     if (!confirm('Weet je zeker dat je deze widget wilt verwijderen?')) return;
     if (!selectedWorkspace) return;
-    
+
     try {
       await widgetAPI.delete(widgetId, selectedWorkspace.id);
       setWidgets(widgets.filter(w => w.id !== widgetId));
@@ -125,7 +127,7 @@ export default function WidgetsPage() {
   };
 </script>
 <script src="${apiUrl}/widget.js" async></script>`;
-    
+
     navigator.clipboard.writeText(embedCode);
     setCopiedId(widget.id);
     setTimeout(() => setCopiedId(null), 2000);
@@ -246,9 +248,8 @@ export default function WidgetsPage() {
             {/* Header */}
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center gap-3">
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                  widget.isActive ? 'bg-primary/10' : 'bg-muted'
-                }`}>
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${widget.isActive ? 'bg-primary/10' : 'bg-muted'
+                  }`}>
                   <RiLayoutGridLine size={24} className={widget.isActive ? 'text-primary' : 'text-muted-foreground'} />
                 </div>
                 <div>
@@ -256,11 +257,10 @@ export default function WidgetsPage() {
                     {widget.name}
                   </h3>
                   <div className="flex items-center gap-2 mt-1">
-                    <span className={`text-xs px-2 py-1 rounded-full ${
-                      widget.isActive 
-                        ? 'bg-green-100 text-green-700' 
+                    <span className={`text-xs px-2 py-1 rounded-full ${widget.isActive
+                        ? 'bg-green-100 text-green-700'
                         : 'bg-gray-100 text-gray-600'
-                    }`}>
+                      }`}>
                       {widget.isActive ? 'Actief' : 'Inactief'}
                     </span>
                   </div>
@@ -323,12 +323,12 @@ export default function WidgetsPage() {
             <div className="mb-4 bg-muted rounded-lg p-3 h-32 flex items-end" style={{
               justifyContent: widget.position.includes('right') ? 'flex-end' : 'flex-start'
             }}>
-              <div 
+              <div
                 className="w-12 h-12 rounded-full shadow-lg flex items-center justify-center"
                 style={{ backgroundColor: widget.primaryColor }}
               >
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M21 15C21 15.5304 20.7893 16.0391 20.4142 16.4142C20.0391 16.7893 19.5304 17 19 17H7L3 21V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H19C19.5304 3 20.0391 3.21071 20.4142 3.58579C20.7893 3.96086 21 4.46957 21 5V15Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M21 15C21 15.5304 20.7893 16.0391 20.4142 16.4142C20.0391 16.7893 19.5304 17 19 17H7L3 21V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H19C19.5304 3 20.0391 3.21071 20.4142 3.58579C20.7893 3.96086 21 4.46957 21 5V15Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </div>
             </div>

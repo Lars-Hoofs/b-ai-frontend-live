@@ -78,12 +78,14 @@ export default function AgentsPage() {
 
   const loadAgents = async () => {
     if (!selectedWorkspace) return;
-    
+
     try {
       setIsLoading(true);
       setError(null);
       const data = await agentAPI.getWorkspaceAgents(selectedWorkspace.id);
-      setAgents(data);
+      if (data) {
+        setAgents(data);
+      }
     } catch (err: any) {
       console.error('Failed to load agents:', err);
       setError(err.message || 'Failed to load agents');
@@ -106,7 +108,7 @@ export default function AgentsPage() {
 
   const handleEditAgent = async (data: any) => {
     if (!editingAgent || !selectedWorkspace) return;
-    
+
     try {
       await agentAPI.update(editingAgent.id, {
         ...data,
@@ -124,7 +126,7 @@ export default function AgentsPage() {
 
   const handleToggleAgent = async (agentId: string, currentStatus: boolean) => {
     if (!selectedWorkspace) return;
-    
+
     try {
       await agentAPI.toggle(agentId, selectedWorkspace.id, !currentStatus);
       setAgents(agents.map(a => a.id === agentId ? { ...a, isActive: !currentStatus } : a));
@@ -138,7 +140,7 @@ export default function AgentsPage() {
   const handleDeleteAgent = async (agentId: string) => {
     if (!confirm('Weet je zeker dat je deze agent wilt verwijderen?')) return;
     if (!selectedWorkspace) return;
-    
+
     try {
       await agentAPI.delete(agentId, selectedWorkspace.id);
       setAgents(agents.filter(a => a.id !== agentId));
@@ -270,9 +272,8 @@ export default function AgentsPage() {
             {/* Header */}
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center gap-3 flex-1 min-w-0">
-                <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                  agent.isActive ? 'bg-primary/10' : 'bg-muted'
-                }`}>
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${agent.isActive ? 'bg-primary/10' : 'bg-muted'
+                  }`}>
                   <RiRobotLine size={20} className={agent.isActive ? 'text-primary' : 'text-muted-foreground'} />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -280,11 +281,10 @@ export default function AgentsPage() {
                     {agent.name}
                   </h3>
                   <div className="flex items-center gap-2 mt-1">
-                    <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-md font-medium ${
-                      agent.isActive 
-                        ? 'bg-green-100 dark:bg-green-950/30 text-green-700 dark:text-green-400' 
+                    <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-md font-medium ${agent.isActive
+                        ? 'bg-green-100 dark:bg-green-950/30 text-green-700 dark:text-green-400'
                         : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
-                    }`}>
+                      }`}>
                       <div className={`w-1.5 h-1.5 rounded-full ${agent.isActive ? 'bg-green-500' : 'bg-gray-400'}`} />
                       {agent.isActive ? 'Active' : 'Inactive'}
                     </span>

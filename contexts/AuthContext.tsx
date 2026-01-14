@@ -43,22 +43,31 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, [sessionData, isPending]);
 
+  // Luister naar auth:logout events van de API client
+  useEffect(() => {
+    const handleLogout = () => {
+      logout();
+    };
+    window.addEventListener('auth:logout', handleLogout);
+    return () => window.removeEventListener('auth:logout', handleLogout);
+  }, []);
+
   const login = async (email: string, password: string) => {
     try {
       const response = await authClient.signIn.email({
         email,
         password,
       });
-      
+
       if (response.error) {
         throw new Error(response.error.message || 'Login failed');
       }
-      
+
       // Manually set user to update UI immediately and prevent redirect issues
       if (response.data?.user) {
         setUser(response.data.user as any);
       }
-      
+
       // Better Auth zal de sessie-cookie zetten; de useSession-hook pakt dit automatisch op.
       return response;
     } catch (error) {
