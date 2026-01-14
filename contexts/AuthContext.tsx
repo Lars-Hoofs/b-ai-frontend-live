@@ -54,6 +54,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
         throw new Error(response.error.message || 'Login failed');
       }
       
+      // Manually set user to update UI immediately and prevent redirect issues
+      if (response.data?.user) {
+        setUser(response.data.user as any);
+      }
+      
       // Better Auth zal de sessie-cookie zetten; de useSession-hook pakt dit automatisch op.
       return response;
     } catch (error) {
