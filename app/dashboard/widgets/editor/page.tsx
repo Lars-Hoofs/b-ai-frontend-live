@@ -39,7 +39,7 @@ function WidgetEditor() {
   const searchParams = useSearchParams();
   const widgetId = searchParams.get('id');
   const { selectedWorkspace } = useWorkspace();
-  
+
   const [config, setConfig] = useState<WidgetConfig>(DEFAULT_CONFIG);
   const [agentId, setAgentId] = useState('');
   const [agents, setAgents] = useState<any[]>([]);
@@ -63,13 +63,13 @@ function WidgetEditor() {
 
   const loadAgents = async () => {
     if (!selectedWorkspace) return;
-    
+
     try {
       setIsLoadingAgents(true);
       const data = await agentAPI.getWorkspaceAgents(selectedWorkspace.id);
       const activeAgents = data.filter((a: any) => a.isActive);
       setAgents(activeAgents);
-      
+
       // Auto-select first agent if creating new widget
       if (!widgetId && activeAgents.length > 0 && !agentId) {
         setAgentId(activeAgents[0].id);
@@ -87,7 +87,7 @@ function WidgetEditor() {
     try {
       setIsLoading(true);
       const data = await widgetAPI.getById(widgetId, selectedWorkspace.id);
-      
+
       // Map API data to config
       setConfig({
         name: data.name,
@@ -95,7 +95,7 @@ function WidgetEditor() {
         position: data.position,
         offsetX: data.offsetX,
         offsetY: data.offsetY,
-        
+
         // Advanced Layout
         layoutMode: data.layoutMode,
         widthPercentage: data.widthPercentage,
@@ -104,7 +104,7 @@ function WidgetEditor() {
         maxHeight: data.maxHeight,
         minWidth: data.minWidth,
         minHeight: data.minHeight,
-        
+
         // Bubble/Icon
         bubbleIcon: data.bubbleIcon,
         bubbleText: data.bubbleText,
@@ -115,7 +115,7 @@ function WidgetEditor() {
         bubbleImageUrl: data.bubbleImageUrl,
         bubbleImageFit: data.bubbleImageFit,
         bubbleShadow: data.bubbleShadow,
-        
+
         // Animation System
         enableAnimation: data.enableAnimation,
         animationType: data.animationType,
@@ -123,12 +123,12 @@ function WidgetEditor() {
         animationDuration: data.animationDuration,
         animationDelay: data.animationDelay,
         hoverAnimation: data.hoverAnimation,
-        
+
         // Icon/Image Relationship
         imageIconRelation: data.imageIconRelation,
         imagePosition: data.imagePosition,
         imageFullHeight: data.imageFullHeight,
-        
+
         // Colors
         bubbleBackgroundColor: data.bubbleBackgroundColor,
         bubbleTextColor: data.bubbleTextColor,
@@ -140,13 +140,13 @@ function WidgetEditor() {
         botMessageColor: data.botMessageColor,
         botMessageTextColor: data.botMessageTextColor,
         borderColor: data.borderColor,
-        
+
         // Bubble Hover
         bubbleHoverBackgroundColor: data.bubbleHoverBackgroundColor,
         bubbleHoverTextColor: data.bubbleHoverTextColor,
         bubbleHoverIconColor: data.bubbleHoverIconColor,
         bubbleHoverScale: data.bubbleHoverScale,
-        
+
         // Header Close Button
         headerCloseIcon: data.headerCloseIcon,
         headerCloseIconColor: data.headerCloseIconColor,
@@ -155,28 +155,42 @@ function WidgetEditor() {
         headerCloseIconHoverBackgroundColor: data.headerCloseIconHoverBackgroundColor,
         onlineStatusColor: data.onlineStatusColor,
         avatarBackgroundColor: data.avatarBackgroundColor,
-        
+
+        // Header Avatar
+        showAgentAvatar: data.showAgentAvatar,
+        showOnlineStatus: data.showOnlineStatus,
+        headerAvatarUrl: data.headerAvatarUrl,
+        headerAvatarEmoji: data.headerAvatarEmoji,
+        headerTitle: data.headerTitle,
+        headerSubtitle: data.headerSubtitle,
+
+        // Chat Area
+        chatBackgroundColor: data.chatBackgroundColor,
+
         // Input Styling
         inputBorderColor: data.inputBorderColor,
         inputFocusBorderColor: data.inputFocusBorderColor,
         inputBackgroundColor: data.inputBackgroundColor,
         inputTextColor: data.inputTextColor,
         inputPlaceholderColor: data.inputPlaceholderColor,
-        
+        inputAreaBackgroundColor: data.inputAreaBackgroundColor,
+        inputAreaBorderColor: data.inputAreaBorderColor,
+        typingIndicatorColor: data.typingIndicatorColor,
+
         // Send Button
         sendButtonIcon: data.sendButtonIcon,
         sendButtonBackgroundColor: data.sendButtonBackgroundColor,
         sendButtonIconColor: data.sendButtonIconColor,
         sendButtonHoverBackgroundColor: data.sendButtonHoverBackgroundColor,
         sendButtonHoverIconColor: data.sendButtonHoverIconColor,
-        
+
         // Advanced Styling
         backgroundGradient: data.backgroundGradient,
         backdropBlur: data.backdropBlur,
         borderWidth: data.borderWidth,
         shadowIntensity: data.shadowIntensity,
         glassEffect: data.glassEffect,
-        
+
         // Chat Window
         chatWidth: data.chatWidth,
         chatHeight: data.chatHeight,
@@ -185,25 +199,29 @@ function WidgetEditor() {
         chatAnimation: data.chatAnimation,
         chatOffsetX: data.chatOffsetX,
         chatOffsetY: data.chatOffsetY,
-        
+
         // Behavior
         greeting: data.greeting,
         placeholder: data.placeholder,
         autoOpen: data.autoOpen,
         autoOpenDelay: data.autoOpenDelay,
-        
+
         // AI-Only Mode & Availability
         aiOnlyMode: data.aiOnlyMode,
         aiOnlyMessage: data.aiOnlyMessage,
         workingHours: data.workingHours,
         holidays: data.holidays,
-        
-        // Advanced
+
+        // Branding
         showBranding: data.showBranding,
+        brandingText: data.brandingText,
+        brandingUrl: data.brandingUrl,
+
+        // Advanced
         customCss: data.customCss,
         zIndex: data.zIndex,
       });
-      
+
       setAgentId(data.agentId);
     } catch (err: any) {
       console.error('Failed to load widget:', err);
@@ -221,7 +239,7 @@ function WidgetEditor() {
 
     try {
       setIsSaving(true);
-      
+
       const widgetData = {
         workspaceId: selectedWorkspace.id,
         agentId,
@@ -230,7 +248,7 @@ function WidgetEditor() {
         position: config.position,
         offsetX: config.offsetX,
         offsetY: config.offsetY,
-        
+
         // Advanced Layout
         layoutMode: config.layoutMode,
         widthPercentage: config.widthPercentage,
@@ -239,7 +257,7 @@ function WidgetEditor() {
         maxHeight: config.maxHeight,
         minWidth: config.minWidth,
         minHeight: config.minHeight,
-        
+
         // Bubble/Icon
         bubbleIcon: config.bubbleIcon,
         bubbleText: config.bubbleText,
@@ -250,7 +268,7 @@ function WidgetEditor() {
         bubbleImageUrl: config.bubbleImageUrl,
         bubbleImageFit: config.bubbleImageFit,
         bubbleShadow: config.bubbleShadow,
-        
+
         // Animation System
         enableAnimation: config.enableAnimation,
         animationType: config.animationType,
@@ -258,12 +276,12 @@ function WidgetEditor() {
         animationDuration: config.animationDuration,
         animationDelay: config.animationDelay,
         hoverAnimation: config.hoverAnimation,
-        
+
         // Icon/Image Relationship
         imageIconRelation: config.imageIconRelation,
         imagePosition: config.imagePosition,
         imageFullHeight: config.imageFullHeight,
-        
+
         // Colors
         bubbleBackgroundColor: config.bubbleBackgroundColor,
         bubbleTextColor: config.bubbleTextColor,
@@ -275,13 +293,13 @@ function WidgetEditor() {
         botMessageColor: config.botMessageColor,
         botMessageTextColor: config.botMessageTextColor,
         borderColor: config.borderColor,
-        
+
         // Bubble Hover
         bubbleHoverBackgroundColor: config.bubbleHoverBackgroundColor,
         bubbleHoverTextColor: config.bubbleHoverTextColor,
         bubbleHoverIconColor: config.bubbleHoverIconColor,
         bubbleHoverScale: config.bubbleHoverScale,
-        
+
         // Header Close Button
         headerCloseIcon: config.headerCloseIcon,
         headerCloseIconColor: config.headerCloseIconColor,
@@ -290,28 +308,42 @@ function WidgetEditor() {
         headerCloseIconHoverBackgroundColor: config.headerCloseIconHoverBackgroundColor,
         onlineStatusColor: config.onlineStatusColor,
         avatarBackgroundColor: config.avatarBackgroundColor,
-        
+
+        // Header Avatar
+        showAgentAvatar: config.showAgentAvatar,
+        showOnlineStatus: config.showOnlineStatus,
+        headerAvatarUrl: config.headerAvatarUrl,
+        headerAvatarEmoji: config.headerAvatarEmoji,
+        headerTitle: config.headerTitle,
+        headerSubtitle: config.headerSubtitle,
+
+        // Chat Area
+        chatBackgroundColor: config.chatBackgroundColor,
+
         // Input Styling
         inputBorderColor: config.inputBorderColor,
         inputFocusBorderColor: config.inputFocusBorderColor,
         inputBackgroundColor: config.inputBackgroundColor,
         inputTextColor: config.inputTextColor,
         inputPlaceholderColor: config.inputPlaceholderColor,
-        
+        inputAreaBackgroundColor: config.inputAreaBackgroundColor,
+        inputAreaBorderColor: config.inputAreaBorderColor,
+        typingIndicatorColor: config.typingIndicatorColor,
+
         // Send Button
         sendButtonIcon: config.sendButtonIcon,
         sendButtonBackgroundColor: config.sendButtonBackgroundColor,
         sendButtonIconColor: config.sendButtonIconColor,
         sendButtonHoverBackgroundColor: config.sendButtonHoverBackgroundColor,
         sendButtonHoverIconColor: config.sendButtonHoverIconColor,
-        
+
         // Advanced Styling
         backgroundGradient: config.backgroundGradient,
         backdropBlur: config.backdropBlur,
         borderWidth: config.borderWidth,
         shadowIntensity: config.shadowIntensity,
         glassEffect: config.glassEffect,
-        
+
         // Chat Window
         chatWidth: config.chatWidth,
         chatHeight: config.chatHeight,
@@ -320,21 +352,25 @@ function WidgetEditor() {
         chatAnimation: config.chatAnimation,
         chatOffsetX: config.chatOffsetX,
         chatOffsetY: config.chatOffsetY,
-        
+
         // Behavior
         greeting: config.greeting?.trim() || undefined,
         placeholder: config.placeholder.trim(),
         autoOpen: config.autoOpen,
         autoOpenDelay: config.autoOpenDelay,
-        
+
         // AI-Only Mode & Availability
         aiOnlyMode: config.aiOnlyMode,
         aiOnlyMessage: config.aiOnlyMessage,
         workingHours: config.workingHours,
         holidays: config.holidays,
-        
-        // Advanced
+
+        // Branding
         showBranding: config.showBranding,
+        brandingText: config.brandingText,
+        brandingUrl: config.brandingUrl,
+
+        // Advanced
         customCss: config.customCss,
         zIndex: config.zIndex,
       };
@@ -387,7 +423,7 @@ function WidgetEditor() {
             </p>
           </div>
         </div>
-        
+
         <div className="flex items-center gap-3">
           {/* Toggle Preview */}
           <button
@@ -397,7 +433,7 @@ function WidgetEditor() {
             <RiEyeLine size={18} />
             {showPreview ? 'Hide Preview' : 'Show Preview'}
           </button>
-          
+
           {/* Save Button */}
           <button
             onClick={handleSave}
@@ -475,11 +511,10 @@ function WidgetEditor() {
               <div className="grid grid-cols-3 gap-2 p-1 bg-background rounded-lg border border-border">
                 <button
                   onClick={() => setPreviewMode('interactive')}
-                  className={`flex items-center justify-center gap-2 py-2 px-2 rounded-md text-xs font-medium transition-all ${
-                    previewMode === 'interactive'
+                  className={`flex items-center justify-center gap-2 py-2 px-2 rounded-md text-xs font-medium transition-all ${previewMode === 'interactive'
                       ? 'bg-primary text-primary-foreground shadow-sm'
                       : 'text-muted-foreground hover:text-foreground'
-                  }`}
+                    }`}
                   title="Volledig interactieve chat preview"
                 >
                   <RiChat3Line size={16} />
@@ -487,11 +522,10 @@ function WidgetEditor() {
                 </button>
                 <button
                   onClick={() => setPreviewMode('animated')}
-                  className={`flex items-center justify-center gap-2 py-2 px-2 rounded-md text-xs font-medium transition-all ${
-                    previewMode === 'animated'
+                  className={`flex items-center justify-center gap-2 py-2 px-2 rounded-md text-xs font-medium transition-all ${previewMode === 'animated'
                       ? 'bg-primary text-primary-foreground shadow-sm'
                       : 'text-muted-foreground hover:text-foreground'
-                  }`}
+                    }`}
                   title="Bekijk widget animaties"
                 >
                   <RiMagicLine size={16} />
@@ -499,11 +533,10 @@ function WidgetEditor() {
                 </button>
                 <button
                   onClick={() => setPreviewMode('static')}
-                  className={`flex items-center justify-center gap-2 py-2 px-2 rounded-md text-xs font-medium transition-all ${
-                    previewMode === 'static'
+                  className={`flex items-center justify-center gap-2 py-2 px-2 rounded-md text-xs font-medium transition-all ${previewMode === 'static'
                       ? 'bg-primary text-primary-foreground shadow-sm'
                       : 'text-muted-foreground hover:text-foreground'
-                  }`}
+                    }`}
                   title="Statische layout preview"
                 >
                   <RiLayoutLine size={16} />
