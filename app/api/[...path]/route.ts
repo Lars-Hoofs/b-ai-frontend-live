@@ -45,7 +45,7 @@ export async function DELETE(
 async function proxyRequest(request: NextRequest, pathArray: string[]) {
   const path = pathArray.join('/');
   const url = `${BACKEND_URL}/api/${path}`;
-  
+
   // Get search params
   const searchParams = request.nextUrl.searchParams.toString();
   const fullUrl = searchParams ? `${url}?${searchParams}` : url;
@@ -105,7 +105,7 @@ async function proxyRequest(request: NextRequest, pathArray: string[]) {
     // Handle Set-Cookie headers specially to ensure proper cookie forwarding
     // Better Auth may set multiple cookies, so we need to get all of them
     const setCookieHeaders: string[] = [];
-    
+
     // Fetch API doesn't support multiple headers with the same name well,
     // so we need to work around this
     response.headers.forEach((value, key) => {
@@ -114,26 +114,55 @@ async function proxyRequest(request: NextRequest, pathArray: string[]) {
       }
     });
 
+    // Detect if we're in production (HTTPS) or development (HTTP)
+    const isProduction = request.url.startsWith('https://');
+    console.log('[Proxy] Environment:', isProduction ? 'PRODUCTION' : 'DEVELOPMENT');
+
     if (setCookieHeaders.length > 0) {
       setCookieHeaders.forEach(cookie => {
-        // In development, modify SameSite to Lax for cross-origin cookie support
-        const modifiedCookie = cookie
-          .split(';')
-          .map(part => {
-            const trimmed = part.trim();
-            // Replace Strict with Lax in dev mode for better compatibility
-            if (trimmed.toLowerCase().startsWith('samesite=')) {
-              return 'SameSite=Lax';
-            }
-            // Remove Secure in development (localhost)
-            if (trimmed.toLowerCase() === 'secure') {
-              return '';
-            }
-            return part;
-          })
-          .filter(Boolean)
-          .join(';');
-        
+        console.log('[Proxy] Original Set-Cookie from backend:', cookie);
+
+        let modifiedCookie = cookie;
+
+        if (!isProduction) {
+          // DEVELOPMENT: Modify cookies to work with localhost
+          modifiedCookie = cookie
+            .split(';')
+            .map(part => {
+              const trimmed = part.trim();
+              // Replace Strict with Lax in dev mode for better compatibility
+              if (trimmed.toLowerCase().startsWith('samesite=')) {
+                return 'SameSite=Lax';
+              }
+              // Remove Secure in development (localhost)
+              if (trimmed.toLowerCase() === 'secure') {
+                return '';
+              }
+              return part;
+            })
+            .filter(Boolean)
+            .join(';');
+        } else {
+          // PRODUCTION: Ensure cookies work cross-domain
+          const cookieParts = cookie.split(';').map(p => p.trim());
+          const hasSecure = cookieParts.some(p => p.toLowerCase() === 'secure');
+          const hasSameSite = cookieParts.some(p => p.toLowerCase().startsWith('samesite='));
+
+          // For cross-domain cookies in production, we need SameSite=None; Secure
+          modifiedCookie = cookie;
+
+          if (!hasSameSite) {
+            modifiedCookie += '; SameSite=None';
+          } else {
+            // Replace SameSite with None for cross-domain
+            modifiedCookie = cookie.replace(/SameSite=(Strict|Lax)/i, 'SameSite=None');
+          }
+
+          if (!hasSecure) {
+            modifiedCookie += '; Secure';
+          }
+        }
+
         nextResponse.headers.append('Set-Cookie', modifiedCookie);
         console.log('[Proxy] Modified Set-Cookie:', modifiedCookie);
       });
@@ -143,8 +172,8 @@ async function proxyRequest(request: NextRequest, pathArray: string[]) {
   } catch (error: any) {
     console.error('[Proxy] Error fetching from backend:', error);
     return NextResponse.json(
-      { 
-        error: 'Proxy Error', 
+      {
+        error: 'Proxy Error',
         message: error.message,
         details: 'Failed to connect to backend',
         backendUrl: BACKEND_URL,
