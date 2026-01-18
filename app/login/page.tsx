@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Script from 'next/script'; // Import Next.js Script
@@ -11,11 +11,19 @@ import { useAuth } from '@/contexts/AuthContext';
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { login: contextLogin } = useAuth();
+  const { login: contextLogin, user, loading: authLoading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Als de user al ingelogd is, redirect meteen
+  useEffect(() => {
+    if (!authLoading && user) {
+      const redirect = searchParams.get('redirect') || '/dashboard';
+      router.replace(redirect);
+    }
+  }, [user, authLoading, router, searchParams]);
 
   // Functie die Unicorn Studio start zodra het script veilig geladen is
   const handleScriptLoad = () => {
@@ -30,17 +38,20 @@ function LoginForm() {
     setLoading(true);
 
     try {
-      await contextLogin(email, password);
-      // Korte kunstmatige vertraging voor UX (optioneel, kan weg als je wilt)
-      await new Promise(resolve => setTimeout(resolve, 100));
+      const response = await contextLogin(email, password);
 
-      const redirect = searchParams.get('redirect') || '/dashboard';
-      router.push(redirect);
+      // Wacht tot de user state gezet is voordat we redirecten
+      // De AuthContext zet loading direct op false na succesvolle login
+      // Dit voorkomt een race condition met de dashboard layout
+      if (response.data?.user) {
+        const redirect = searchParams.get('redirect') || '/dashboard';
+        router.replace(redirect);
+      }
     } catch (err: any) {
       setError(err.message || 'Inloggen mislukt');
-    } finally {
       setLoading(false);
     }
+    // Niet setLoading(false) in finally - we willen loading state behouden tijdens redirect
   };
 
   return (
