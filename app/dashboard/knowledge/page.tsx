@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
 import { knowledgeBaseAPI } from '@/lib/api';
-import { 
+import {
   RiDatabase2Line,
   RiFileTextLine,
   RiUploadLine,
@@ -155,9 +155,9 @@ export default function KnowledgeBasePage() {
                 <div className={`${action.bgColor} p-3 rounded-lg`}>
                   <Icon size={24} className={action.color} />
                 </div>
-                <RiArrowRightSLine 
-                  size={20} 
-                  className="text-muted-foreground group-hover:translate-x-1 transition-transform" 
+                <RiArrowRightSLine
+                  size={20}
+                  className="text-muted-foreground group-hover:translate-x-1 transition-transform"
                 />
               </div>
               <h3 className="text-lg font-semibold text-foreground mb-2">
@@ -174,7 +174,7 @@ export default function KnowledgeBasePage() {
       {/* Knowledge Bases List */}
       <div>
         <h2 className="text-xl font-semibold text-foreground mb-4">Your Knowledge Bases</h2>
-        
+
         {knowledgeBases.length === 0 ? (
           <div className="bg-card border border-border rounded-lg p-12 text-center">
             <RiDatabase2Line size={64} className="text-muted-foreground mx-auto mb-4 opacity-50" />
@@ -197,27 +197,31 @@ export default function KnowledgeBasePage() {
             {knowledgeBases.map((kb) => (
               <div
                 key={kb.id}
-                className="bg-card border border-border rounded-lg p-6 hover:shadow-lg transition-shadow"
+                className="bg-card border border-border rounded-lg p-6 hover:shadow-lg transition-shadow cursor-pointer group"
+                onClick={() => router.push(`/dashboard/knowledge/${kb.id}`)}
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="bg-primary/10 p-3 rounded-lg">
                     <RiDatabase2Line size={24} className="text-primary" />
                   </div>
                   <button
-                    onClick={() => handleDeleteKB(kb.id, kb.name)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteKB(kb.id, kb.name);
+                    }}
                     className="p-2 text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950 rounded-lg transition-colors"
                   >
                     <RiDeleteBinLine size={18} />
                   </button>
                 </div>
-                
-                <h3 className="text-lg font-semibold text-foreground mb-2">
+
+                <h3 className="text-lg font-semibold text-foreground mb-2 group-hover:text-primary transition-colors">
                   {kb.name}
                 </h3>
                 <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
                   {kb.description || 'No description'}
                 </p>
-                
+
                 <div className="pt-4 border-t border-border space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">
@@ -226,14 +230,20 @@ export default function KnowledgeBasePage() {
                   </div>
                   <div className="flex gap-2">
                     <button
-                      onClick={() => router.push(`/dashboard/knowledge/upload?kb=${kb.id}`)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        router.push(`/dashboard/knowledge/upload?kb=${kb.id}`);
+                      }}
                       className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-foreground bg-muted hover:bg-muted/80 rounded-lg transition-colors"
                     >
                       <RiUploadLine size={14} />
                       Upload
                     </button>
                     <button
-                      onClick={() => router.push(`/dashboard/knowledge/scrape?kb=${kb.id}`)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        router.push(`/dashboard/knowledge/scrape?kb=${kb.id}`);
+                      }}
                       className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-foreground bg-muted hover:bg-muted/80 rounded-lg transition-colors"
                     >
                       <RiGlobalLine size={14} />
@@ -254,7 +264,7 @@ export default function KnowledgeBasePage() {
             <h3 className="text-xl font-bold text-foreground mb-4">
               Create Knowledge Base
             </h3>
-            
+
             <form onSubmit={handleCreateKB} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">
@@ -269,7 +279,7 @@ export default function KnowledgeBasePage() {
                   placeholder="e.g., Product Documentation"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">
                   Description
@@ -282,7 +292,7 @@ export default function KnowledgeBasePage() {
                   placeholder="Optional description..."
                 />
               </div>
-              
+
               <div className="flex gap-3 pt-2">
                 <button
                   type="button"
