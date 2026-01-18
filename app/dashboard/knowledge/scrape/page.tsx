@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
 import { knowledgeBaseAPI, scraperAPI } from '@/lib/api';
 import { io, Socket } from 'socket.io-client';
-import { 
+import {
   RiGlobalLine,
   RiArrowLeftLine,
   RiPlayLine,
@@ -39,7 +39,7 @@ export default function ScrapePage() {
   const [url, setUrl] = useState('');
   const [maxPages, setMaxPages] = useState(0);
   const [socket, setSocket] = useState<Socket | null>(null);
-  
+
   // Job state
   const [currentJob, setCurrentJob] = useState<ScrapeJob | null>(null);
   const [selectedUrls, setSelectedUrls] = useState<Set<string>>(new Set());
@@ -53,31 +53,31 @@ export default function ScrapePage() {
       loadKnowledgeBases();
     }
   }, [selectedWorkspace]);
-  
+
   // Load jobs when KB is selected
   useEffect(() => {
     if (selectedKB) {
       loadJobs();
     }
   }, [selectedKB]);
-  
+
   // Auto-refresh jobs list every 5 seconds if there are active jobs
   useEffect(() => {
     if (!selectedKB || !allJobs.length) return;
-    
-    const hasActiveJobs = allJobs.some(job => 
+
+    const hasActiveJobs = allJobs.some(job =>
       job.status === 'IN_PROGRESS' || job.status === 'DISCOVERING' || job.status === 'PENDING'
     );
-    
+
     if (!hasActiveJobs) return;
-    
+
     const interval = setInterval(() => {
       loadJobs();
     }, 10000); // Poll every 10 seconds to avoid rate limiting
-    
+
     return () => clearInterval(interval);
   }, [selectedKB, allJobs.length, allJobs.some(j => j.status === 'IN_PROGRESS' || j.status === 'DISCOVERING')]);
-  
+
   // Setup Socket.IO for real-time updates (only once)
   useEffect(() => {
     const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
@@ -85,11 +85,11 @@ export default function ScrapePage() {
       withCredentials: true,
       transports: ['websocket', 'polling'],
     });
-    
+
     socketInstance.on('connect', () => {
       console.log('Socket.IO connected');
     });
-    
+
     socketInstance.on('scraper:job-progress', (data: any) => {
       console.log('Job progress:', data);
       // Reload jobs list when any job makes progress
@@ -97,7 +97,7 @@ export default function ScrapePage() {
         loadJobs();
       }
     });
-    
+
     socketInstance.on('scraper:job-completed', (data: any) => {
       console.log('Job completed:', data);
       // Reload jobs list when any job completes
@@ -105,9 +105,9 @@ export default function ScrapePage() {
         loadJobs();
       }
     });
-    
+
     setSocket(socketInstance);
-    
+
     return () => {
       console.log('Disconnecting Socket.IO');
       socketInstance.disconnect();
@@ -127,10 +127,10 @@ export default function ScrapePage() {
       console.error('Failed to load knowledge bases:', err);
     }
   };
-  
+
   const loadJobs = async () => {
     if (!selectedKB) return;
-    
+
     try {
       const jobs = await scraperAPI.getJobsForKB(selectedKB);
       setAllJobs(jobs || []);
@@ -155,22 +155,22 @@ export default function ScrapePage() {
     try {
       const result = await scraperAPI.createJob(url, selectedKB, maxPages);
       setCurrentJob(result.job);
-      
+
       // Poll for job status until discovery is complete
       const pollInterval = setInterval(async () => {
         const job = await scraperAPI.getJob(result.job.id);
         setCurrentJob(job);
-        
+
         if (job.status === 'PENDING' || job.status === 'FAILED') {
           clearInterval(pollInterval);
           setIsCreatingJob(false);
-          
+
           if (job.status === 'PENDING') {
             // Auto-select all URLs
             setSelectedUrls(new Set(job.discoveredUrls));
           }
         }
-      }, 3000); // Poll every 3 seconds to avoid rate limiting
+      }, 2000); // Poll every 2 seconds for real-time updates
     } catch (err: any) {
       console.error('Failed to create job:', err);
       alert(err.message || 'Failed to discover URLs');
@@ -246,7 +246,7 @@ export default function ScrapePage() {
               </label>
               {knowledgeBases.length === 0 ? (
                 <div className="text-sm text-muted-foreground">
-                  No knowledge bases found. 
+                  No knowledge bases found.
                   <button
                     type="button"
                     onClick={() => router.push('/dashboard/knowledge')}
@@ -418,13 +418,29 @@ export default function ScrapePage() {
         {/* Status messages */}
         {currentJob && currentJob.status === 'DISCOVERING' && (
           <div className="bg-card border border-border rounded-lg p-6">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 mb-4">
               <RiLoader4Line size={24} className="text-primary animate-spin" />
-              <div>
+              <div className="flex-1">
                 <p className="font-medium text-foreground">Discovering URLs...</p>
-                <p className="text-sm text-muted-foreground">Please wait while we crawl the website</p>
+                <p className="text-sm text-muted-foreground">
+                  {currentJob.discoveredUrls && currentJob.discoveredUrls.length > 0
+                    ? `Found ${currentJob.discoveredUrls.length} URLs so far`
+                    : 'Starting discovery process...'}
+                </p>
               </div>
             </div>
+            {/* Progress indicator */}
+            {currentJob.discoveredUrls && currentJob.discoveredUrls.length > 0 && (
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm text-muted-foreground">
+                  <span>Crawling website...</span>
+                  <span>{currentJob.discoveredUrls.length} URLs discovered</span>
+                </div>
+                <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+                  <div className="h-full bg-primary animate-pulse"></div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -447,7 +463,7 @@ export default function ScrapePage() {
             </button>
           </div>
         )}
-        
+
         {/* Jobs List */}
         {allJobs.length > 0 && !currentJob && (
           <div className="mt-8">
@@ -463,14 +479,13 @@ export default function ScrapePage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-3 mb-2">
                         <h3 className="font-semibold text-foreground truncate">{job.baseUrl}</h3>
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${
-                          job.status === 'COMPLETED' ? 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300' :
+                        <span className={`px-2 py-1 rounded text-xs font-medium ${job.status === 'COMPLETED' ? 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300' :
                           job.status === 'IN_PROGRESS' ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300' :
-                          job.status === 'DISCOVERING' ? 'bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300' :
-                          job.status === 'PENDING' ? 'bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300' :
-                          job.status === 'FAILED' ? 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300' :
-                          'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
-                        }`}>
+                            job.status === 'DISCOVERING' ? 'bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300' :
+                              job.status === 'PENDING' ? 'bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300' :
+                                job.status === 'FAILED' ? 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300' :
+                                  'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
+                          }`}>
                           {job.status}
                         </span>
                       </div>
