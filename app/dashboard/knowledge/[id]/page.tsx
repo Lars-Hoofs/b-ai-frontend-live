@@ -81,6 +81,12 @@ export default function KnowledgeBaseDetailPage() {
 
             // Load documents
             const docsData = await knowledgeBaseAPI.getDocuments(kbId);
+            console.log('📄 Loaded documents:', docsData);
+            console.log('📊 Document breakdown:', {
+                total: docsData?.length || 0,
+                scraped: docsData?.filter((d: any) => d.sourceType === 'SCRAPE').length || 0,
+                uploaded: docsData?.filter((d: any) => d.sourceType === 'UPLOAD').length || 0,
+            });
             setDocuments(docsData || []);
 
             // Load scrape jobs
@@ -246,9 +252,9 @@ export default function KnowledgeBaseDetailPage() {
                                         <div className="flex items-center gap-3 mb-2">
                                             <h3 className="font-semibold text-foreground truncate">{job.baseUrl}</h3>
                                             <span className={`px-2 py-1 rounded text-xs font-medium ${job.status === 'COMPLETED' ? 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300' :
-                                                    job.status === 'IN_PROGRESS' ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300' :
-                                                        job.status === 'FAILED' ? 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300' :
-                                                            'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
+                                                job.status === 'IN_PROGRESS' ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300' :
+                                                    job.status === 'FAILED' ? 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300' :
+                                                        'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
                                                 }`}>
                                                 {job.status}
                                             </span>
@@ -311,8 +317,8 @@ export default function KnowledgeBaseDetailPage() {
                     <button
                         onClick={() => setActiveTab('all')}
                         className={`px-4 py-2 font-medium transition-colors ${activeTab === 'all'
-                                ? 'text-primary border-b-2 border-primary'
-                                : 'text-muted-foreground hover:text-foreground'
+                            ? 'text-primary border-b-2 border-primary'
+                            : 'text-muted-foreground hover:text-foreground'
                             }`}
                     >
                         All ({documents.length})
@@ -320,8 +326,8 @@ export default function KnowledgeBaseDetailPage() {
                     <button
                         onClick={() => setActiveTab('scrapes')}
                         className={`px-4 py-2 font-medium transition-colors ${activeTab === 'scrapes'
-                                ? 'text-primary border-b-2 border-primary'
-                                : 'text-muted-foreground hover:text-foreground'
+                            ? 'text-primary border-b-2 border-primary'
+                            : 'text-muted-foreground hover:text-foreground'
                             }`}
                     >
                         Scraped ({scrapedDocs.length})
@@ -329,8 +335,8 @@ export default function KnowledgeBaseDetailPage() {
                     <button
                         onClick={() => setActiveTab('uploads')}
                         className={`px-4 py-2 font-medium transition-colors ${activeTab === 'uploads'
-                                ? 'text-primary border-b-2 border-primary'
-                                : 'text-muted-foreground hover:text-foreground'
+                            ? 'text-primary border-b-2 border-primary'
+                            : 'text-muted-foreground hover:text-foreground'
                             }`}
                     >
                         Uploaded ({uploadedDocs.length})
@@ -361,8 +367,8 @@ export default function KnowledgeBaseDetailPage() {
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-3 mb-2">
                                             <div className={`p-2 rounded-lg ${doc.sourceType === 'SCRAPE'
-                                                    ? 'bg-purple-50 dark:bg-purple-950'
-                                                    : 'bg-green-50 dark:bg-green-950'
+                                                ? 'bg-purple-50 dark:bg-purple-950'
+                                                : 'bg-green-50 dark:bg-green-950'
                                                 }`}>
                                                 {doc.sourceType === 'SCRAPE' ? (
                                                     <RiGlobalLine size={16} className="text-purple-600 dark:text-purple-400" />

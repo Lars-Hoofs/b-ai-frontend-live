@@ -98,7 +98,7 @@ export function InteractiveChatPreview({ config }: InteractiveChatPreviewProps) 
   // Get bubble styles
   const getBubbleStyles = (): React.CSSProperties => {
     let size = { width: 64, height: 64 };
-    
+
     if (config.bubbleSize === 'small') size = { width: 48, height: 48 };
     else if (config.bubbleSize === 'large') size = { width: 80, height: 80 };
     else if (config.bubbleSize === 'custom' && config.bubbleWidth && config.bubbleHeight) {
@@ -169,14 +169,14 @@ export function InteractiveChatPreview({ config }: InteractiveChatPreviewProps) 
         if (config.maxWidth) styles.maxWidth = `${config.maxWidth}px`;
         if (config.minWidth) styles.minWidth = `${config.minWidth}px`;
         break;
-      
+
       case 'full-width':
         styles.width = '100%';
         styles.height = `${config.chatHeight}px`;
         if (config.maxHeight) styles.maxHeight = `${config.maxHeight}px`;
         if (config.minHeight) styles.minHeight = `${config.minHeight}px`;
         break;
-      
+
       case 'percentage':
         styles.width = `${config.widthPercentage || 80}%`;
         styles.height = `${config.heightPercentage || 80}%`;
@@ -185,7 +185,7 @@ export function InteractiveChatPreview({ config }: InteractiveChatPreviewProps) 
         if (config.maxHeight) styles.maxHeight = `${config.maxHeight}px`;
         if (config.minHeight) styles.minHeight = `${config.minHeight}px`;
         break;
-      
+
       case 'fixed':
       default:
         styles.width = `${config.chatWidth}px`;
@@ -198,10 +198,10 @@ export function InteractiveChatPreview({ config }: InteractiveChatPreviewProps) 
 
   const sendMessage = () => {
     if (!inputValue.trim()) return;
-    
-    setMessages([...messages, 
-      { text: inputValue, isUser: true },
-      { text: 'Bedankt voor je bericht! Dit is een voorbeeld antwoord.', isUser: false }
+
+    setMessages([...messages,
+    { text: inputValue, isUser: true },
+    { text: 'Bedankt voor je bericht! Dit is een voorbeeld antwoord.', isUser: false }
     ]);
     setInputValue('');
   };
@@ -223,9 +223,9 @@ export function InteractiveChatPreview({ config }: InteractiveChatPreviewProps) 
         </div>
 
         {/* Preview Area */}
-        <div 
+        <div
           className="relative bg-gradient-to-br from-purple-50 to-blue-50 dark:from-gray-900 dark:to-gray-800"
-          style={{ 
+          style={{
             height: '600px',
             backgroundImage: 'radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.1), transparent 50%), radial-gradient(circle at 80% 80%, rgba(59, 130, 246, 0.1), transparent 50%)',
           }}
@@ -281,8 +281,8 @@ export function InteractiveChatPreview({ config }: InteractiveChatPreviewProps) 
                     ...getChatWindowSize(),
                     position: 'absolute',
                     // Voor full-height: neem volledige hoogte van container, anders normal offset
-                    ...(config.layoutMode === 'full-height' 
-                      ? { top: 0, bottom: 0 } 
+                    ...(config.layoutMode === 'full-height'
+                      ? { top: 0, bottom: 0 }
                       : { bottom: '80px' }
                     ),
                     // Voor full-width: neem volledige breedte
@@ -301,7 +301,7 @@ export function InteractiveChatPreview({ config }: InteractiveChatPreviewProps) 
                   }}
                 >
                   {/* Chat Header */}
-                  <div 
+                  <div
                     style={{
                       backgroundColor: config.headerBackgroundColor,
                       color: config.headerTextColor,
@@ -311,9 +311,43 @@ export function InteractiveChatPreview({ config }: InteractiveChatPreviewProps) 
                       alignItems: 'center',
                     }}
                   >
-                    <div className="flex items-center gap-2">
-                      <RiRobotLine size={20} />
-                      <span className="font-semibold">Chat Assistent</span>
+                    <div className="flex items-center gap-3">
+                      {config.showAgentAvatar !== false && (
+                        <div
+                          style={{
+                            width: '36px',
+                            height: '36px',
+                            borderRadius: '50%',
+                            backgroundColor: config.avatarBackgroundColor || 'rgba(255,255,255,0.15)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            overflow: 'hidden',
+                          }}
+                        >
+                          {config.headerAvatarUrl ? (
+                            <img
+                              src={config.headerAvatarUrl}
+                              alt="Avatar"
+                              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            />
+                          ) : (
+                            <span style={{ fontSize: '18px' }}>{config.headerAvatarEmoji || '👤'}</span>
+                          )}
+                        </div>
+                      )}
+                      <div>
+                        <span className="font-semibold">{config.headerTitle || 'Chat Support'}</span>
+                        {config.headerSubtitle && (
+                          <div style={{ fontSize: '11px', opacity: 0.8 }}>{config.headerSubtitle}</div>
+                        )}
+                        {config.showOnlineStatus !== false && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '10px', opacity: 0.9, marginTop: '2px' }}>
+                            <span style={{ width: '6px', height: '6px', background: config.onlineStatusColor || '#22c55e', borderRadius: '50%' }}></span>
+                            Online
+                          </div>
+                        )}
+                      </div>
                     </div>
                     <button
                       onClick={(e) => {
@@ -327,7 +361,7 @@ export function InteractiveChatPreview({ config }: InteractiveChatPreviewProps) 
                   </div>
 
                   {/* Messages */}
-                  <div 
+                  <div
                     style={{
                       flex: 1,
                       padding: '16px',
@@ -335,7 +369,7 @@ export function InteractiveChatPreview({ config }: InteractiveChatPreviewProps) 
                       display: 'flex',
                       flexDirection: 'column',
                       gap: '12px',
-                      backgroundColor: '#f9fafb',
+                      backgroundColor: config.chatBackgroundColor || '#f9fafb',
                     }}
                   >
                     {messages.map((msg, idx) => (
@@ -367,11 +401,11 @@ export function InteractiveChatPreview({ config }: InteractiveChatPreviewProps) 
                   </div>
 
                   {/* Input Area */}
-                  <div 
+                  <div
                     style={{
                       padding: '16px',
-                      borderTop: '1px solid #e5e7eb',
-                      backgroundColor: '#ffffff',
+                      borderTop: `1px solid ${config.inputAreaBorderColor || '#e5e7eb'}`,
+                      backgroundColor: config.inputAreaBackgroundColor || '#ffffff',
                     }}
                   >
                     <div className="flex gap-2">
@@ -394,14 +428,21 @@ export function InteractiveChatPreview({ config }: InteractiveChatPreviewProps) 
                         <RiSendPlaneFill size={18} />
                       </button>
                     </div>
+                    {config.showBranding && (
+                      <div className="p-2 text-center border-t border-border bg-muted/30">
+                        <a
+                          href={config.brandingUrl || "https://bonsaimedia.nl"}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          {config.brandingText || "Powered by BonsaiMedia.nl"}
+                        </a>
+                      </div>
+                    )}
                   </div>
 
                   {/* Branding */}
-                  {config.showBranding && (
-                    <div className="text-center py-2 text-xs text-gray-500 border-t border-gray-200">
-                      Powered by Bonsai AI
-                    </div>
-                  )}
                 </motion.div>
               )}
             </AnimatePresence>
@@ -432,9 +473,9 @@ export function InteractiveChatPreview({ config }: InteractiveChatPreviewProps) 
             <div>
               <span className="text-muted-foreground">Hoogte:</span>
               <span className="ml-2 font-medium text-foreground">
-                {config.layoutMode === 'full-height' ? '100%' : 
-                 config.layoutMode === 'percentage' ? `${config.heightPercentage || 80}%` : 
-                 `${config.chatHeight}px`}
+                {config.layoutMode === 'full-height' ? '100%' :
+                  config.layoutMode === 'percentage' ? `${config.heightPercentage || 80}%` :
+                    `${config.chatHeight}px`}
               </span>
             </div>
           </div>

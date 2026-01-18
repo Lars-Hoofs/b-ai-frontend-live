@@ -3,10 +3,10 @@
 import { useState } from 'react';
 import { RemixiconPicker } from './RemixiconPicker';
 import { PositionPicker } from './PositionPicker';
-import { 
-  RiLayoutLine, 
-  RiPaletteLine, 
-  RiSettings3Line, 
+import {
+  RiLayoutLine,
+  RiPaletteLine,
+  RiSettings3Line,
   RiCodeLine,
   RiCheckboxCircleLine
 } from '@remixicon/react';
@@ -15,14 +15,14 @@ export interface WidgetConfig {
   // Basic
   name: string;
   widgetType: 'bubble' | 'searchbar' | 'custom-box';
-  
+
   // Layout
   position: string;
   width?: number;
   height?: number;
   offsetX?: number;
   offsetY?: number;
-  
+
   // Advanced Layout
   layoutMode?: 'fixed' | 'percentage' | 'full-height' | 'full-width' | 'custom';
   widthPercentage?: number;
@@ -31,7 +31,7 @@ export interface WidgetConfig {
   maxHeight?: number;
   minWidth?: number;
   minHeight?: number;
-  
+
   // Bubble/Icon
   bubbleIcon?: string;
   bubbleText?: string;
@@ -42,7 +42,7 @@ export interface WidgetConfig {
   bubbleImageUrl?: string;
   bubbleImageFit?: 'cover' | 'contain' | 'fill';
   bubbleShadow?: string;
-  
+
   // Animation System
   enableAnimation?: boolean;
   animationType?: 'slide' | 'fade' | 'scale' | 'bounce' | 'flip';
@@ -50,12 +50,12 @@ export interface WidgetConfig {
   animationDuration?: number; // in ms
   animationDelay?: number; // in ms
   hoverAnimation?: 'lift' | 'grow' | 'pulse' | 'rotate' | 'none';
-  
+
   // Icon/Image Relationship
   imageIconRelation?: 'cover' | 'overlay' | 'grow-from' | 'side-by-side';
   imagePosition?: 'top' | 'bottom' | 'left' | 'right' | 'background';
   imageFullHeight?: boolean;
-  
+
   // Colors
   bubbleBackgroundColor: string;
   bubbleTextColor: string;
@@ -67,13 +67,13 @@ export interface WidgetConfig {
   botMessageColor: string;
   botMessageTextColor?: string;
   borderColor?: string;
-  
+
   // Bubble Hover States
   bubbleHoverBackgroundColor?: string;
   bubbleHoverTextColor?: string;
   bubbleHoverIconColor?: string;
   bubbleHoverScale?: number;
-  
+
   // Header Close Button
   headerCloseIcon?: string;
   headerCloseIconColor?: string;
@@ -82,28 +82,42 @@ export interface WidgetConfig {
   headerCloseIconHoverBackgroundColor?: string;
   onlineStatusColor?: string;
   avatarBackgroundColor?: string;
-  
+
+  // Header Avatar
+  showAgentAvatar?: boolean;
+  showOnlineStatus?: boolean;
+  headerAvatarUrl?: string; // Custom avatar image URL
+  headerAvatarEmoji?: string; // Custom emoji for avatar
+  headerTitle?: string;
+  headerSubtitle?: string;
+
+  // Chat Area Styling
+  chatBackgroundColor?: string; // Messages area background
+
   // Input Styling
   inputBorderColor?: string;
   inputFocusBorderColor?: string;
   inputBackgroundColor?: string;
   inputTextColor?: string;
   inputPlaceholderColor?: string;
-  
+  inputAreaBackgroundColor?: string; // Entire input area background
+  inputAreaBorderColor?: string; // Border above input area
+  typingIndicatorColor?: string; // "AI is typing..." text color
+
   // Send Button
   sendButtonIcon?: string;
   sendButtonBackgroundColor?: string;
   sendButtonIconColor?: string;
   sendButtonHoverBackgroundColor?: string;
   sendButtonHoverIconColor?: string;
-  
+
   // Advanced Styling
   backgroundGradient?: { from: string; to: string; direction: string };
   backdropBlur?: number;
   borderWidth?: number;
   shadowIntensity?: 'none' | 'sm' | 'md' | 'lg' | 'xl';
   glassEffect?: boolean;
-  
+
   // Chat Window
   chatWidth: number;
   chatHeight: number;
@@ -112,13 +126,13 @@ export interface WidgetConfig {
   chatAnimation?: 'slide-up' | 'slide-down' | 'fade' | 'scale' | 'none';
   chatOffsetX?: number;
   chatOffsetY?: number;
-  
+
   // Behavior
   greeting?: string;
   placeholder: string;
   autoOpen?: boolean;
   autoOpenDelay?: number;
-  
+
   // AI-Only Mode & Availability
   aiOnlyMode?: boolean;
   aiOnlyMessage?: { [lang: string]: string };
@@ -126,11 +140,13 @@ export interface WidgetConfig {
     [day: string]: { enabled: boolean; start: string; end: string };
   };
   holidays?: Array<{ date: string; name: string; recurring?: boolean }>;
-  
+
   // Advanced
   customCss?: string;
   zIndex?: number;
   showBranding?: boolean;
+  brandingText?: string;
+  brandingUrl?: string;
 }
 
 interface AdvancedWidgetEditorProps {
@@ -488,7 +504,7 @@ function LayoutTab({ config, updateConfig }: { config: WidgetConfig; updateConfi
         <label className="block text-sm font-medium text-foreground mb-3">
           Chat Venster Afmetingen
         </label>
-        
+
         {/* Show hint based on layout mode */}
         {config.layoutMode === 'full-height' && (
           <div className="mb-3 p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg">
@@ -497,7 +513,7 @@ function LayoutTab({ config, updateConfig }: { config: WidgetConfig; updateConfi
             </p>
           </div>
         )}
-        
+
         {config.layoutMode === 'full-width' && (
           <div className="mb-3 p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg">
             <p className="text-sm text-blue-700 dark:text-blue-300">
@@ -505,7 +521,7 @@ function LayoutTab({ config, updateConfig }: { config: WidgetConfig; updateConfi
             </p>
           </div>
         )}
-        
+
         {config.layoutMode === 'percentage' && (
           <div className="mb-3 p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg">
             <p className="text-sm text-blue-700 dark:text-blue-300">
@@ -513,7 +529,7 @@ function LayoutTab({ config, updateConfig }: { config: WidgetConfig; updateConfi
             </p>
           </div>
         )}
-        
+
         <div className="grid grid-cols-2 gap-4">
           <div className={config.layoutMode === 'full-width' ? 'opacity-50' : ''}>
             <label className="block text-xs text-muted-foreground mb-2">
@@ -779,7 +795,7 @@ function StylingTab({ config, updateConfig }: { config: WidgetConfig; updateConf
           onChange={(bubbleIconColor) => updateConfig({ bubbleIconColor })}
         />
       </div>
-      
+
       {/* Bubble Hover States */}
       <div className="space-y-4">
         <h3 className="font-semibold text-foreground">Widget Hover Effecten <span className="text-xs text-muted-foreground">(optioneel)</span></h3>
@@ -839,8 +855,83 @@ function StylingTab({ config, updateConfig }: { config: WidgetConfig; updateConf
             onChange={(avatarBackgroundColor) => updateConfig({ avatarBackgroundColor })}
           />
         </div>
+
+        {/* Header Avatar Customization */}
+        <div className="mt-4 space-y-4 p-4 bg-muted/30 rounded-lg">
+          <h4 className="font-medium text-sm text-foreground">Avatar Aanpassen</h4>
+          <div className="flex items-center gap-4 mb-3">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={config.showAgentAvatar !== false}
+                onChange={(e) => updateConfig({ showAgentAvatar: e.target.checked })}
+                className="rounded border-gray-300"
+              />
+              <span className="text-sm">Toon Avatar</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={config.showOnlineStatus !== false}
+                onChange={(e) => updateConfig({ showOnlineStatus: e.target.checked })}
+                className="rounded border-gray-300"
+              />
+              <span className="text-sm">Toon Online Status</span>
+            </label>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-2">
+              Avatar Afbeelding URL <span className="text-xs text-muted-foreground">(optioneel - vervangt emoji)</span>
+            </label>
+            <input
+              type="url"
+              value={config.headerAvatarUrl || ''}
+              onChange={(e) => updateConfig({ headerAvatarUrl: e.target.value })}
+              placeholder="https://example.com/avatar.jpg"
+              className="w-full px-4 py-2 bg-background border border-input rounded-lg"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-2">
+              Avatar Emoji <span className="text-xs text-muted-foreground">(als geen afbeelding is ingesteld)</span>
+            </label>
+            <input
+              type="text"
+              value={config.headerAvatarEmoji || ''}
+              onChange={(e) => updateConfig({ headerAvatarEmoji: e.target.value })}
+              placeholder="👤 (standaard)"
+              maxLength={4}
+              className="w-full px-4 py-2 bg-background border border-input rounded-lg text-2xl"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">Header Titel</label>
+              <input
+                type="text"
+                value={config.headerTitle || ''}
+                onChange={(e) => updateConfig({ headerTitle: e.target.value })}
+                placeholder="Chat Support"
+                className="w-full px-4 py-2 bg-background border border-input rounded-lg"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">Header Subtitel</label>
+              <input
+                type="text"
+                value={config.headerSubtitle || ''}
+                onChange={(e) => updateConfig({ headerSubtitle: e.target.value })}
+                placeholder="We helpen je graag!"
+                className="w-full px-4 py-2 bg-background border border-input rounded-lg"
+              />
+            </div>
+          </div>
+        </div>
       </div>
-      
+
       {/* Close Button Customization */}
       <div className="space-y-4">
         <h3 className="font-semibold text-foreground">Sluitknop <span className="text-xs text-muted-foreground">(optioneel)</span></h3>
@@ -875,6 +966,33 @@ function StylingTab({ config, updateConfig }: { config: WidgetConfig; updateConf
         </div>
       </div>
 
+      {/* Chat Area Styling */}
+      <div className="space-y-4">
+        <h3 className="font-semibold text-foreground">Chat Gebied Styling</h3>
+        <div className="grid grid-cols-2 gap-4">
+          <ColorInput
+            label="Berichten Achtergrond"
+            value={config.chatBackgroundColor || '#f9fafb'}
+            onChange={(chatBackgroundColor) => updateConfig({ chatBackgroundColor })}
+          />
+          <ColorInput
+            label="Typing Indicator Kleur"
+            value={config.typingIndicatorColor || '#6b7280'}
+            onChange={(typingIndicatorColor) => updateConfig({ typingIndicatorColor })}
+          />
+          <ColorInput
+            label="Input Gebied Achtergrond"
+            value={config.inputAreaBackgroundColor || '#ffffff'}
+            onChange={(inputAreaBackgroundColor) => updateConfig({ inputAreaBackgroundColor })}
+          />
+          <ColorInput
+            label="Input Gebied Border"
+            value={config.inputAreaBorderColor || '#f3f4f6'}
+            onChange={(inputAreaBorderColor) => updateConfig({ inputAreaBorderColor })}
+          />
+        </div>
+      </div>
+
       {/* Message Colors */}
       <div className="space-y-4">
         <h3 className="font-semibold text-foreground">Bericht Kleuren</h3>
@@ -901,7 +1019,7 @@ function StylingTab({ config, updateConfig }: { config: WidgetConfig; updateConf
           />
         </div>
       </div>
-      
+
       {/* Input Field Styling */}
       <div className="space-y-4">
         <h3 className="font-semibold text-foreground">Input Veld Styling</h3>
@@ -933,7 +1051,7 @@ function StylingTab({ config, updateConfig }: { config: WidgetConfig; updateConf
           onChange={(inputPlaceholderColor) => updateConfig({ inputPlaceholderColor })}
         />
       </div>
-      
+
       {/* Send Button Customization */}
       <div className="space-y-4">
         <h3 className="font-semibold text-foreground">Verzendknop</h3>
@@ -1002,7 +1120,7 @@ function StylingTab({ config, updateConfig }: { config: WidgetConfig; updateConf
       {/* Advanced Styling */}
       <div className="space-y-4">
         <h3 className="font-semibold text-foreground">Geavanceerd</h3>
-        
+
         {/* Shadow Intensity */}
         <div>
           <label className="block text-xs text-muted-foreground mb-2">Schaduw Intensiteit</label>
@@ -1087,23 +1205,23 @@ function StylingTab({ config, updateConfig }: { config: WidgetConfig; updateConf
             <ColorInput
               label="Van"
               value={config.backgroundGradient?.from || config.bubbleBackgroundColor}
-              onChange={(from) => updateConfig({ 
-                backgroundGradient: { 
-                  from, 
+              onChange={(from) => updateConfig({
+                backgroundGradient: {
+                  from,
                   to: config.backgroundGradient?.to || config.bubbleBackgroundColor,
                   direction: config.backgroundGradient?.direction || 'to-br'
-                } 
+                }
               })}
             />
             <ColorInput
               label="Naar"
               value={config.backgroundGradient?.to || config.bubbleBackgroundColor}
-              onChange={(to) => updateConfig({ 
-                backgroundGradient: { 
+              onChange={(to) => updateConfig({
+                backgroundGradient: {
                   from: config.backgroundGradient?.from || config.bubbleBackgroundColor,
                   to,
                   direction: config.backgroundGradient?.direction || 'to-br'
-                } 
+                }
               })}
             />
           </div>
@@ -1111,7 +1229,7 @@ function StylingTab({ config, updateConfig }: { config: WidgetConfig; updateConf
             <label className="block text-xs text-muted-foreground mb-2">Richting</label>
             <select
               value={config.backgroundGradient?.direction || 'to-br'}
-              onChange={(e) => updateConfig({ 
+              onChange={(e) => updateConfig({
                 backgroundGradient: {
                   from: config.backgroundGradient?.from || config.bubbleBackgroundColor,
                   to: config.backgroundGradient?.to || config.bubbleBackgroundColor,
@@ -1231,7 +1349,7 @@ function AnimationsTab({ config, updateConfig }: { config: WidgetConfig; updateC
           {/* Animation Timing */}
           <div className="space-y-4">
             <h3 className="font-semibold text-foreground">Timing & Snelheid</h3>
-            
+
             <div>
               <label className="block text-xs text-muted-foreground mb-2">
                 Duur (ms)
@@ -1422,8 +1540,8 @@ function BehaviorTab({ config, updateConfig }: { config: WidgetConfig; updateCon
             </label>
             <textarea
               value={config.aiOnlyMessage?.nl || ''}
-              onChange={(e) => updateConfig({ 
-                aiOnlyMessage: { ...config.aiOnlyMessage, nl: e.target.value } 
+              onChange={(e) => updateConfig({
+                aiOnlyMessage: { ...config.aiOnlyMessage, nl: e.target.value }
               })}
               placeholder="Sorry, op het moment zijn er geen medewerkers beschikbaar."
               rows={2}
@@ -1444,13 +1562,12 @@ function BehaviorTab({ config, updateConfig }: { config: WidgetConfig; updateCon
                 key={day}
                 type="button"
                 onClick={() => setSelectedDay(day)}
-                className={`py-2 text-xs rounded-lg font-medium transition-all ${
-                  selectedDay === day
-                    ? 'bg-primary text-white'
-                    : isEnabled
+                className={`py-2 text-xs rounded-lg font-medium transition-all ${selectedDay === day
+                  ? 'bg-primary text-white'
+                  : isEnabled
                     ? 'bg-green-100 text-green-700 hover:bg-green-200'
                     : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                }`}
+                  }`}
               >
                 {dayLabels[day].slice(0, 2)}
               </button>
@@ -1652,6 +1769,54 @@ function AdvancedTab({ config, updateConfig }: { config: WidgetConfig; updateCon
         </p>
       </div>
 
+      {/* Branding */}
+      <div className="space-y-4 pt-4 border-t border-border">
+        <div className="flex items-center justify-between">
+          <h3 className="font-semibold text-foreground">Branding</h3>
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="showBranding"
+              checked={config.showBranding !== false}
+              onChange={(e) => updateConfig({ showBranding: e.target.checked })}
+              className="rounded border-gray-300 dark:border-gray-700"
+            />
+            <label htmlFor="showBranding" className="text-sm font-medium cursor-pointer">
+              Toon Branding
+            </label>
+          </div>
+        </div>
+
+        {config.showBranding !== false && (
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                Branding Tekst
+              </label>
+              <input
+                type="text"
+                value={config.brandingText || 'Powered by BonsaiMedia.nl'}
+                onChange={(e) => updateConfig({ brandingText: e.target.value })}
+                placeholder="Powered by..."
+                className="w-full px-4 py-2 bg-background border border-input rounded-lg"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                Link URL
+              </label>
+              <input
+                type="url"
+                value={config.brandingUrl || 'https://bonsaimedia.nl'}
+                onChange={(e) => updateConfig({ brandingUrl: e.target.value })}
+                placeholder="https://..."
+                className="w-full px-4 py-2 bg-background border border-input rounded-lg"
+              />
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Custom CSS */}
       <div>
         <label className="block text-sm font-medium text-foreground mb-2">
@@ -1677,8 +1842,8 @@ function AdvancedTab({ config, updateConfig }: { config: WidgetConfig; updateCon
           <div className="text-sm">
             <p className="font-semibold text-foreground mb-1">Pro Tip</p>
             <p className="text-muted-foreground">
-              Gebruik browser DevTools om CSS selectors te vinden. Alle widget elementen hebben ID's zoals 
-              <code className="bg-muted px-1 py-0.5 rounded text-xs mx-1">#ai-chat-bubble</code> en 
+              Gebruik browser DevTools om CSS selectors te vinden. Alle widget elementen hebben ID's zoals
+              <code className="bg-muted px-1 py-0.5 rounded text-xs mx-1">#ai-chat-bubble</code> en
               <code className="bg-muted px-1 py-0.5 rounded text-xs mx-1">#ai-chat-window</code>.
             </p>
           </div>
