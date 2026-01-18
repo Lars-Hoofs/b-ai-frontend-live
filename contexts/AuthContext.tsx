@@ -30,18 +30,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const { data: sessionData, isPending } = useBetterAuthSession();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   // Sync user state met Better Auth session
   useEffect(() => {
-    if (!isPending) {
+    // Alleen synchroniseren als we NIET aan het inloggen zijn
+    // Dit voorkomt dat de sessionData effect de user op null zet tijdens login
+    if (!isPending && !isLoggingIn) {
       if (sessionData?.user) {
         setUser(sessionData.user as any);
       } else {
         setUser(null);
       }
       setLoading(false);
+    } else if (!isPending && isLoggingIn) {
+      // Als de sessie geladen is tijdens login, markeer login als compleet
+      setIsLoggingIn(false);
+      setLoading(false);
     }
-  }, [sessionData, isPending]);
+  }, [sessionData, isPending, isLoggingIn]);
 
   // Luister naar auth:logout events van de API client
   useEffect(() => {
@@ -54,23 +61,28 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const login = async (email: string, password: string) => {
     try {
+      setIsLoggingIn(true);
+
       const response = await authClient.signIn.email({
         email,
         password,
       });
 
       if (response.error) {
+        setIsLoggingIn(false);
         throw new Error(response.error.message || 'Login failed');
       }
 
       // Manually set user to update UI immediately and prevent redirect issues
       if (response.data?.user) {
         setUser(response.data.user as any);
+        setLoading(false);
       }
 
       // Better Auth zal de sessie-cookie zetten; de useSession-hook pakt dit automatisch op.
       return response;
     } catch (error) {
+      setIsLoggingIn(false);
       throw error;
     }
   };

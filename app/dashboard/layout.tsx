@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
 import { Sidebar } from '@/components/dashboard/sidebar';
 import { Topbar } from '@/components/dashboard/topbar';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { WorkspaceProvider } from '@/contexts/WorkspaceContext';
 import { useRouter } from 'next/navigation';
@@ -15,11 +15,16 @@ export default function DashboardLayout({
   const [collapsed, setCollapsed] = useState(false);
   const { user, loading } = useAuth();
   const router = useRouter();
+  const hasRedirected = useRef(false);
 
   useEffect(() => {
-    // Redirect to login if not authenticated after loading
-    if (!loading && !user) {
-      router.push('/login?redirect=/dashboard');
+    // Alleen redirecten als:
+    // 1. We niet meer aan het laden zijn
+    // 2. Er geen user is
+    // 3. We nog niet eerder hebben geredirect
+    if (!loading && !user && !hasRedirected.current) {
+      hasRedirected.current = true;
+      router.replace('/login?redirect=/dashboard');
     }
   }, [user, loading, router]);
 
@@ -41,17 +46,17 @@ export default function DashboardLayout({
     <WorkspaceProvider>
       <div className="min-h-screen bg-background relative overflow-hidden">
         {/* Subtle blue gradient glow from bottom */}
-        <div 
+        <div
           className="fixed inset-0 pointer-events-none z-0"
           style={{
             background: 'radial-gradient(ellipse 100% 60% at 50% 100%, rgba(0, 26, 255, 0.15) 0%, rgba(0, 26, 255, 0.05) 40%, transparent 70%)'
           }}
         />
-        
+
         <Sidebar collapsed={collapsed} onToggle={() => setCollapsed((s) => !s)} />
         <div
           className="transition-all duration-200 relative z-10"
-          style={{ 
+          style={{
             marginLeft: collapsed ? '80px' : '256px',
             '--sidebar-width': collapsed ? '80px' : '256px'
           } as React.CSSProperties}
