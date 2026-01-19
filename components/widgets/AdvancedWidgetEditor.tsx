@@ -3,12 +3,14 @@
 import { useState } from 'react';
 import { RemixiconPicker } from './RemixiconPicker';
 import { PositionPicker } from './PositionPicker';
+import { TypographyTab } from './TypographyTab';
 import {
   RiLayoutLine,
   RiPaletteLine,
   RiSettings3Line,
   RiCodeLine,
-  RiCheckboxCircleLine
+  RiCheckboxCircleLine,
+  RiFontSize
 } from '@remixicon/react';
 
 export interface WidgetConfig {
@@ -147,6 +149,62 @@ export interface WidgetConfig {
   };
   holidays?: Array<{ date: string; name: string; recurring?: boolean }>;
 
+  // Typography System
+  fontFamily?: string; // Google Fonts name: "Inter", "Roboto", "Outfit", etc.
+  fontSize?: {
+    header?: number;
+    message?: number;
+    input?: number;
+  };
+  fontWeight?: {
+    header?: number;
+    message?: number;
+    input?: number;
+  };
+  lineHeight?: {
+    header?: number;
+    message?: number;
+    input?: number;
+  };
+  letterSpacing?: {
+    header?: number; // in em
+    message?: number;
+    input?: number;
+  };
+
+  // Avatar Gradient (modern look like screenshot)
+  avatarGradient?: { from: string; to: string; direction: string };
+  avatarBorderColor?: string;
+  avatarBorderWidth?: number;
+  avatarSize?: number;
+
+  // File Attachment Styling
+  attachmentStyle?: {
+    backgroundColor?: string;
+    borderRadius?: number;
+    iconColor?: string;
+  };
+  showAttachmentPreviews?: boolean;
+  attachmentIconStyle?: 'modern' | 'minimal' | 'colorful';
+
+  // GSAP Animation Options
+  gsapEnabled?: boolean;
+  gsapBubbleEntry?: 'bounceIn' | 'fadeInUp' | 'scaleIn' | 'rotateIn' | 'none';
+  gsapChatEntry?: 'slideInRight' | 'fadeIn' | 'zoomIn' | 'slideInUp' | 'none';
+  gsapMessageEntry?: 'fadeInUp' | 'slideInLeft' | 'fadeIn' | 'none';
+  gsapDuration?: number; // in seconds
+  gsapEase?: string; // GSAP easing function
+
+  // Message Bubble Enhancements
+  messageShadow?: string;
+  messageSpacing?: number;
+  messageMaxWidth?: number; // percentage
+
+  // Header Enhancements
+  headerGradient?: { from: string; to: string; direction: string };
+  headerShadow?: string;
+  headerPadding?: number;
+
   // Advanced
   customCss?: string;
   zIndex?: number;
@@ -160,7 +218,7 @@ interface AdvancedWidgetEditorProps {
   onChange: (config: WidgetConfig) => void;
 }
 
-type TabType = 'layout' | 'styling' | 'animations' | 'behavior' | 'advanced';
+type TabType = 'layout' | 'styling' | 'typography' | 'animations' | 'behavior' | 'advanced';
 
 export function AdvancedWidgetEditor({ config, onChange }: AdvancedWidgetEditorProps) {
   const [activeTab, setActiveTab] = useState<TabType>('layout');
@@ -172,6 +230,7 @@ export function AdvancedWidgetEditor({ config, onChange }: AdvancedWidgetEditorP
   const tabs = [
     { id: 'layout' as TabType, label: 'Layout', icon: RiLayoutLine },
     { id: 'styling' as TabType, label: 'Styling', icon: RiPaletteLine },
+    { id: 'typography' as TabType, label: 'Typografie', icon: RiFontSize },
     { id: 'animations' as TabType, label: 'Animaties', icon: RiCheckboxCircleLine },
     { id: 'behavior' as TabType, label: 'Gedrag', icon: RiSettings3Line },
     { id: 'advanced' as TabType, label: 'Geavanceerd', icon: RiCodeLine },
@@ -210,6 +269,9 @@ export function AdvancedWidgetEditor({ config, onChange }: AdvancedWidgetEditorP
         )}
         {activeTab === 'styling' && (
           <StylingTab config={config} updateConfig={updateConfig} />
+        )}
+        {activeTab === 'typography' && (
+          <TypographyTab config={config} updateConfig={updateConfig} />
         )}
         {activeTab === 'animations' && (
           <AnimationsTab config={config} updateConfig={updateConfig} />
