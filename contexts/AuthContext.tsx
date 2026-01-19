@@ -27,27 +27,52 @@ interface AuthProviderProps {
 
 export function AuthProvider({ children }: AuthProviderProps) {
   // Gebruik Better Auth's ingebouwde session hook als bron van waarheid
-  const { data: sessionData, isPending } = useBetterAuthSession();
+  const { data: sessionData, isPending, error: sessionError } = useBetterAuthSession();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
+  // Debug logging
+  useEffect(() => {
+    console.log('[Auth] Session state:', {
+      isPending,
+      hasSessionData: !!sessionData,
+      hasUser: !!sessionData?.user,
+      isLoggingIn,
+      loading,
+      sessionError: sessionError?.message,
+    });
+  }, [sessionData, isPending, isLoggingIn, loading, sessionError]);
+
   // Sync user state met Better Auth session
   useEffect(() => {
-    // Alleen synchroniseren als we NIET aan het inloggen zijn
-    // Dit voorkomt dat de sessionData effect de user op null zet tijdens login
-    if (!isPending && !isLoggingIn) {
-      if (sessionData?.user) {
-        setUser(sessionData.user as any);
-      } else {
-        setUser(null);
-      }
-      setLoading(false);
-    } else if (!isPending && isLoggingIn) {
-      // Als de sessie geladen is tijdens login, markeer login als compleet
-      setIsLoggingIn(false);
-      setLoading(false);
+    // Wacht tot de session check klaar is
+    if (isPending) {
+      console.log('[Auth] Session still pending...');
+      return;
     }
+
+    // Als we aan het inloggen zijn, wacht tot de session data binnenkomt
+    if (isLoggingIn) {
+      if (sessionData?.user) {
+        console.log('[Auth] Login complete, user found:', sessionData.user.email);
+        setUser(sessionData.user as any);
+        setIsLoggingIn(false);
+        setLoading(false);
+      }
+      // Blijf wachten als we inloggen maar nog geen user hebben
+      return;
+    }
+
+    // Normale sync na page load of refresh
+    if (sessionData?.user) {
+      console.log('[Auth] Session user found:', sessionData.user.email);
+      setUser(sessionData.user as any);
+    } else {
+      console.log('[Auth] No session user found');
+      setUser(null);
+    }
+    setLoading(false);
   }, [sessionData, isPending, isLoggingIn]);
 
   // Luister naar auth:logout events van de API client

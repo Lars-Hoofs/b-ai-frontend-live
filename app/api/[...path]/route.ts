@@ -138,33 +138,24 @@ async function proxyRequest(request: NextRequest, pathArray: string[]) {
               if (trimmed.toLowerCase() === 'secure') {
                 return '';
               }
+              // Remove domain in development (use localhost)
+              if (trimmed.toLowerCase().startsWith('domain=')) {
+                return '';
+              }
               return part;
             })
             .filter(Boolean)
             .join(';');
-        } else {
-          // PRODUCTION: Ensure cookies work cross-domain
-          const cookieParts = cookie.split(';').map(p => p.trim());
-          const hasSecure = cookieParts.some(p => p.toLowerCase() === 'secure');
-          const hasSameSite = cookieParts.some(p => p.toLowerCase().startsWith('samesite='));
-
-          // For cross-domain cookies in production, we need SameSite=None; Secure
-          modifiedCookie = cookie;
-
-          if (!hasSameSite) {
-            modifiedCookie += '; SameSite=None';
-          } else {
-            // Replace SameSite with None for cross-domain
-            modifiedCookie = cookie.replace(/SameSite=(Strict|Lax)/i, 'SameSite=None');
-          }
-
-          if (!hasSecure) {
-            modifiedCookie += '; Secure';
-          }
         }
+        // PRODUCTION: Don't modify cookies!
+        // The backend already sets the correct settings:
+        // - domain: .bonsaimedia.nl (works for ai.bonsaimedia.nl and api.bonsaimedia.nl)
+        // - SameSite=Lax (correct for same-site top-level navigation)
+        // - Secure: true (for HTTPS)
+        // Changing SameSite to None would break the cookies!
 
         nextResponse.headers.append('Set-Cookie', modifiedCookie);
-        console.log('[Proxy] Modified Set-Cookie:', modifiedCookie);
+        console.log('[Proxy] Final Set-Cookie:', modifiedCookie);
       });
     }
 
