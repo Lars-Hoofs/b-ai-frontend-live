@@ -136,6 +136,11 @@ export interface WidgetConfig {
   // AI-Only Mode & Availability
   aiOnlyMode?: boolean;
   aiOnlyMessage?: { [lang: string]: string };
+
+  // Sources Display
+  showSources?: boolean;
+  maxVisibleSources?: number;
+
   workingHours?: {
     [day: string]: { enabled: boolean; start: string; end: string };
   };

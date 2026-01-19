@@ -12,7 +12,7 @@ interface InteractiveChatPreviewProps {
 
 export function InteractiveChatPreview({ config }: InteractiveChatPreviewProps) {
   const [showChat, setShowChat] = useState(false);
-  const [messages, setMessages] = useState<Array<{ text: string; isUser: boolean }>>([
+  const [messages, setMessages] = useState<Array<{ text: string; isUser: boolean; sources?: Array<{ title: string; url: string }> }>>([
     { text: config.greeting || 'Hoi! Hoe kan ik je helpen?', isUser: false }
   ]);
   const [inputValue, setInputValue] = useState('');
@@ -201,7 +201,16 @@ export function InteractiveChatPreview({ config }: InteractiveChatPreviewProps) 
 
     setMessages([...messages,
     { text: inputValue, isUser: true },
-    { text: 'Bedankt voor je bericht! Dit is een voorbeeld antwoord.', isUser: false }
+    {
+      text: 'Bedankt voor je bericht! Dit is een voorbeeld antwoord.',
+      isUser: false,
+      sources: [
+        { title: 'Google', url: 'https://google.com' },
+        { title: 'Bonsai Media', url: 'https://bonsaimedia.nl' },
+        { title: 'Example', url: 'https://example.com' },
+        { title: 'OpenAI', url: 'https://openai.com' }
+      ]
+    }
     ]);
     setInputValue('');
   };
@@ -395,6 +404,48 @@ export function InteractiveChatPreview({ config }: InteractiveChatPreviewProps) 
                           }}
                         >
                           {msg.text}
+
+                          {/* Sources Preview */}
+                          {!msg.isUser && msg.sources && config.showSources !== false && (
+                            <div style={{
+                              marginTop: '8px',
+                              paddingTop: '8px',
+                              borderTop: '1px solid rgba(0,0,0,0.05)',
+                              display: 'flex',
+                              gap: '6px',
+                              flexWrap: 'wrap',
+                              alignItems: 'center'
+                            }}>
+                              {msg.sources.slice(0, config.maxVisibleSources || 3).map((source: any, i: number) => (
+                                <a
+                                  key={i}
+                                  href={source.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  title={source.title}
+                                  style={{
+                                    display: 'block',
+                                    width: '24px',
+                                    height: '24px',
+                                    borderRadius: '50%',
+                                    border: '1px solid rgba(0,0,0,0.1)',
+                                    backgroundColor: 'white',
+                                    overflow: 'hidden',
+                                    cursor: 'pointer',
+                                    transition: 'transform 0.2s'
+                                  }}
+                                  onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
+                                  onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                                >
+                                  <img
+                                    src={`https://www.google.com/s2/favicons?domain=${new URL(source.url).hostname}&sz=64`}
+                                    alt={source.title}
+                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                  />
+                                </a>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       </motion.div>
                     ))}
