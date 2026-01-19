@@ -630,13 +630,13 @@ function StylingTab({ config, updateConfig }: { config: WidgetConfig; updateConf
           type="color"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-16 h-10 rounded-lg cursor-pointer border border-input"
+          className="w-16 h-10 rounded-lg cursor-pointer border border-input shadow-sm"
         />
         <input
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="flex-1 px-4 py-2 bg-background border border-input rounded-lg font-mono text-sm"
+          className="flex-1 px-4 py-2 bg-background border border-input rounded-lg font-mono text-sm shadow-sm"
         />
       </div>
     </div>
@@ -644,613 +644,233 @@ function StylingTab({ config, updateConfig }: { config: WidgetConfig; updateConf
 
   return (
     <div className="space-y-6">
-      {/* Icon Picker */}
-      {config.widgetType === 'bubble' && (
-        <div>
-          <label className="block text-sm font-medium text-foreground mb-3">
-            Icon
-          </label>
-          <RemixiconPicker
-            value={config.bubbleIcon || 'RiChat1Line'}
-            onChange={(bubbleIcon) => updateConfig({ bubbleIcon })}
-          />
-        </div>
-      )}
+      <div className="bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-950/20 dark:to-blue-950/20 border-l-4 border-indigo-500 p-4 rounded-r-lg mb-6">
+        <h3 className="font-semibold text-indigo-900 dark:text-indigo-100 flex items-center gap-2">
+          <RiPaletteLine size={20} />
+          Modern Styling
+        </h3>
+        <p className="text-sm text-indigo-700 dark:text-indigo-300 mt-1">
+          Make your widget stand out with gradients, glassmorphism, and custom brand colors.
+        </p>
+      </div>
 
-      {/* Bubble Text */}
-      {(config.widgetType === 'bubble' || config.widgetType === 'custom-box') && (
-        <div>
-          <label className="block text-sm font-medium text-foreground mb-2">
-            Tekst op Widget <span className="text-xs text-muted-foreground">(optioneel)</span>
-          </label>
-          <input
-            type="text"
-            value={config.bubbleText || ''}
-            onChange={(e) => updateConfig({ bubbleText: e.target.value })}
-            placeholder="Bijv. 'Help nodig?' of 'Chat met ons'"
-            maxLength={20}
-            className="w-full px-4 py-2 bg-background border border-input rounded-lg"
-          />
-        </div>
-      )}
+      {/* Basic Appearance */}
+      <div className="space-y-4">
+        <h3 className="font-semibold text-lg text-foreground border-b pb-2">Appearance</h3>
 
-      {/* Image Upload */}
-      {(config.widgetType === 'bubble' || config.widgetType === 'custom-box') && (
-        <div className="space-y-3">
-          <label className="block text-sm font-medium text-foreground">
-            Afbeelding <span className="text-xs text-muted-foreground">(optioneel)</span>
-          </label>
-          <input
-            type="url"
-            value={config.bubbleImageUrl || ''}
-            onChange={(e) => updateConfig({ bubbleImageUrl: e.target.value })}
-            placeholder="https://voorbeeld.nl/afbeelding.jpg"
-            className="w-full px-4 py-2 bg-background border border-input rounded-lg"
-          />
-          {config.bubbleImageUrl && (
-            <div className="space-y-3">
+        {/* Widget Icon */}
+        {config.widgetType === 'bubble' && (
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-3">
+              Widget Icon
+            </label>
+            <RemixiconPicker
+              value={config.bubbleIcon || 'RiChat1Line'}
+              onChange={(bubbleIcon) => updateConfig({ bubbleIcon })}
+            />
+          </div>
+        )}
+
+        {/* Text & Image Upload */}
+        {(config.widgetType === 'bubble' || config.widgetType === 'custom-box') && (
+          <div className="grid md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                Widget Text <span className="text-xs text-muted-foreground">(Optional)</span>
+              </label>
+              <input
+                type="text"
+                value={config.bubbleText || ''}
+                onChange={(e) => updateConfig({ bubbleText: e.target.value })}
+                placeholder="e.g. 'Need help?'"
+                maxLength={25}
+                className="w-full px-4 py-2 bg-background border border-input rounded-lg shadow-sm focus:ring-2 focus:ring-primary/20 transition-all"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                Custom Image URL <span className="text-xs text-muted-foreground">(Optional)</span>
+              </label>
+              <input
+                type="url"
+                value={config.bubbleImageUrl || ''}
+                onChange={(e) => updateConfig({ bubbleImageUrl: e.target.value })}
+                placeholder="https://example.com/avatar.png"
+                className="w-full px-4 py-2 bg-background border border-input rounded-lg shadow-sm focus:ring-2 focus:ring-primary/20 transition-all"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Image Customization */}
+        {config.bubbleImageUrl && (
+          <div className="p-4 bg-muted/30 rounded-lg space-y-3 border border-border/50">
+            <h4 className="text-sm font-semibold mb-2">Image Settings</h4>
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs text-muted-foreground mb-2">Afbeelding Fit</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {[
-                    { value: 'cover', label: 'Cover' },
-                    { value: 'contain', label: 'Contain' },
-                    { value: 'fill', label: 'Fill' },
-                  ].map(fit => (
-                    <button
-                      key={fit.value}
-                      type="button"
-                      onClick={() => updateConfig({ bubbleImageFit: fit.value as any })}
-                      className={`
-                        py-2 px-3 rounded-lg border-2 text-sm transition-all
-                        ${(config.bubbleImageFit || 'cover') === fit.value
-                          ? 'border-primary bg-primary/5 font-semibold'
-                          : 'border-border hover:border-primary/50'
-                        }
-                      `}
-                    >
-                      {fit.label}
-                    </button>
-                  ))}
-                </div>
+                <label className="block text-xs text-muted-foreground mb-1">Fit Mode</label>
+                <select
+                  value={config.bubbleImageFit || 'cover'}
+                  onChange={(e) => updateConfig({ bubbleImageFit: e.target.value as any })}
+                  className="w-full px-3 py-2 text-sm bg-background border border-input rounded-lg"
+                >
+                  <option value="cover">Cover (Fill)</option>
+                  <option value="contain">Contain (Fit)</option>
+                  <option value="fill">Stretch</option>
+                </select>
               </div>
-
               <div>
-                <label className="block text-xs text-muted-foreground mb-2">Relatie met Icon</label>
-                <div className="grid grid-cols-2 gap-2">
-                  {[
-                    { value: 'cover', label: 'Bedek Icon', desc: 'Afbeelding vervangt icon' },
-                    { value: 'overlay', label: 'Overlay', desc: 'Over icon heen' },
-                    { value: 'grow-from', label: 'Groei vanuit', desc: 'Groeit vanuit icon' },
-                    { value: 'side-by-side', label: 'Naast Elkaar', desc: 'Icon + afbeelding' },
-                  ].map(relation => (
-                    <button
-                      key={relation.value}
-                      type="button"
-                      onClick={() => updateConfig({ imageIconRelation: relation.value as any })}
-                      className={`
-                        p-3 rounded-lg border-2 text-left transition-all
-                        ${(config.imageIconRelation || 'cover') === relation.value
-                          ? 'border-primary bg-primary/5'
-                          : 'border-border hover:border-primary/50'
-                        }
-                      `}
-                    >
-                      <div className="font-semibold text-xs mb-0.5">{relation.label}</div>
-                      <div className="text-[10px] text-muted-foreground">{relation.desc}</div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs text-muted-foreground mb-2">Afbeelding Positie</label>
-                <div className="grid grid-cols-5 gap-2">
-                  {['top', 'bottom', 'left', 'right', 'background'].map(pos => (
-                    <button
-                      key={pos}
-                      type="button"
-                      onClick={() => updateConfig({ imagePosition: pos as any })}
-                      className={`
-                        py-2 px-2 rounded-lg border-2 text-xs transition-all capitalize
-                        ${(config.imagePosition || 'background') === pos
-                          ? 'border-primary bg-primary/5 font-semibold'
-                          : 'border-border hover:border-primary/50'
-                        }
-                      `}
-                    >
-                      {pos}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-                <input
-                  type="checkbox"
-                  id="imageFullHeight"
-                  checked={config.imageFullHeight || false}
-                  onChange={(e) => updateConfig({ imageFullHeight: e.target.checked })}
-                />
-                <label htmlFor="imageFullHeight" className="text-sm font-medium cursor-pointer">
-                  Volle Hoogte Afbeelding
-                </label>
+                <label className="block text-xs text-muted-foreground mb-1">Position relative to Text</label>
+                <select
+                  value={config.imageIconRelation || 'cover'}
+                  onChange={(e) => updateConfig({ imageIconRelation: e.target.value as any })}
+                  className="w-full px-3 py-2 text-sm bg-background border border-input rounded-lg"
+                >
+                  <option value="cover">Replace Icon</option>
+                  <option value="side-by-side">Side by Side (Left)</option>
+                  <option value="overlay">Background Overlay</option>
+                </select>
               </div>
             </div>
+          </div>
+        )}
+      </div>
+
+      {/* Main Colors & Gradient */}
+      <div className="space-y-4">
+        <h3 className="font-semibold text-lg text-foreground border-b pb-2">Colors & Effects</h3>
+
+        {/* Gradient Control */}
+        <div className="bg-card border rounded-xl p-5 shadow-sm space-y-4">
+          <div className="flex items-center justify-between mb-2">
+            <label className="font-medium text-foreground">Background Style</label>
+            <div className="flex bg-muted p-1 rounded-lg">
+              <button
+                onClick={() => updateConfig({ backgroundGradient: undefined })}
+                className={`px-3 py-1 rounded-md text-sm transition-all ${!config.backgroundGradient ? 'bg-white shadow text-primary font-medium' : 'text-muted-foreground hover:text-foreground'}`}
+              >Solid</button>
+              <button
+                onClick={() => updateConfig({
+                  backgroundGradient: {
+                    from: config.bubbleBackgroundColor,
+                    to: '#818cf8',
+                    direction: 'to-br'
+                  }
+                })}
+                className={`px-3 py-1 rounded-md text-sm transition-all ${config.backgroundGradient ? 'bg-white shadow text-primary font-medium' : 'text-muted-foreground hover:text-foreground'}`}
+              >Gradient</button>
+            </div>
+          </div>
+
+          {config.backgroundGradient ? (
+            <div className="space-y-3 animate-in fade-in duration-300">
+              <div className="grid grid-cols-2 gap-4">
+                <ColorInput label="Start Color" value={config.backgroundGradient.from} onChange={(v) => updateConfig({ backgroundGradient: { ...config.backgroundGradient!, from: v } })} />
+                <ColorInput label="End Color" value={config.backgroundGradient.to} onChange={(v) => updateConfig({ backgroundGradient: { ...config.backgroundGradient!, to: v } })} />
+              </div>
+              <div>
+                <label className="block text-xs text-muted-foreground mb-2">Direction</label>
+                <div className="grid grid-cols-4 gap-2">
+                  {['to-t', 'to-tr', 'to-r', 'to-br', 'to-b', 'to-bl', 'to-l', 'to-tl'].map(dir => (
+                    <button
+                      key={dir}
+                      onClick={() => updateConfig({ backgroundGradient: { ...config.backgroundGradient!, direction: dir } })}
+                      className={`h-8 rounded border transition-all ${config.backgroundGradient?.direction === dir ? 'border-primary ring-2 ring-primary/20 bg-primary/5' : 'border-input hover:bg-muted'}`}
+                      title={dir}
+                    >
+                      <div className={`w-full h-full bg-gradient-${dir.replace('to-', 'to ')} from-gray-400 to-gray-600 opacity-20`} style={{ background: `linear-gradient(${dir.replace('-', ' ')}, currentColor, transparent)` }}></div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <ColorInput label="Solid Color" value={config.bubbleBackgroundColor} onChange={(v) => updateConfig({ bubbleBackgroundColor: v })} />
           )}
         </div>
-      )}
 
-      {/* Bubble Colors */}
-      <div className="space-y-4">
-        <h3 className="font-semibold text-foreground">Widget Kleuren</h3>
-        <ColorInput
-          label="Achtergrondkleur"
-          value={config.bubbleBackgroundColor}
-          onChange={(bubbleBackgroundColor) => updateConfig({ bubbleBackgroundColor })}
-        />
-        <ColorInput
-          label="Tekstkleur"
-          value={config.bubbleTextColor}
-          onChange={(bubbleTextColor) => updateConfig({ bubbleTextColor })}
-        />
-        <ColorInput
-          label="Icon Kleur"
-          value={config.bubbleIconColor || config.bubbleTextColor}
-          onChange={(bubbleIconColor) => updateConfig({ bubbleIconColor })}
-        />
-      </div>
-
-      {/* Bubble Hover States */}
-      <div className="space-y-4">
-        <h3 className="font-semibold text-foreground">Widget Hover Effecten <span className="text-xs text-muted-foreground">(optioneel)</span></h3>
+        {/* Text & Icon Colors */}
         <div className="grid grid-cols-2 gap-4">
-          <ColorInput
-            label="Hover Achtergrond"
-            value={config.bubbleHoverBackgroundColor || ''}
-            onChange={(bubbleHoverBackgroundColor) => updateConfig({ bubbleHoverBackgroundColor })}
-          />
-          <ColorInput
-            label="Hover Tekst"
-            value={config.bubbleHoverTextColor || ''}
-            onChange={(bubbleHoverTextColor) => updateConfig({ bubbleHoverTextColor })}
-          />
-          <ColorInput
-            label="Hover Icon"
-            value={config.bubbleHoverIconColor || ''}
-            onChange={(bubbleHoverIconColor) => updateConfig({ bubbleHoverIconColor })}
-          />
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">Hover Schaal</label>
-            <input
-              type="number"
-              step="0.05"
-              min="0.8"
-              max="1.5"
-              value={config.bubbleHoverScale || 1.05}
-              onChange={(e) => updateConfig({ bubbleHoverScale: parseFloat(e.target.value) })}
-              className="w-full px-4 py-2 bg-background border border-input rounded-lg"
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Header Colors */}
-      <div className="space-y-4">
-        <h3 className="font-semibold text-foreground">Header Kleuren</h3>
-        <ColorInput
-          label="Header Achtergrond"
-          value={config.headerBackgroundColor}
-          onChange={(headerBackgroundColor) => updateConfig({ headerBackgroundColor })}
-        />
-        <ColorInput
-          label="Header Tekst"
-          value={config.headerTextColor}
-          onChange={(headerTextColor) => updateConfig({ headerTextColor })}
-        />
-        <div className="grid grid-cols-2 gap-4">
-          <ColorInput
-            label="Online Status"
-            value={config.onlineStatusColor || '#22c55e'}
-            onChange={(onlineStatusColor) => updateConfig({ onlineStatusColor })}
-          />
-          <ColorInput
-            label="Avatar Achtergrond"
-            value={config.avatarBackgroundColor || ''}
-            onChange={(avatarBackgroundColor) => updateConfig({ avatarBackgroundColor })}
-          />
+          <ColorInput label="Text Color" value={config.bubbleTextColor} onChange={(v) => updateConfig({ bubbleTextColor: v })} />
+          <ColorInput label="Icon Color" value={config.bubbleIconColor || config.bubbleTextColor} onChange={(v) => updateConfig({ bubbleIconColor: v })} />
         </div>
 
-        {/* Header Avatar Customization */}
-        <div className="mt-4 space-y-4 p-4 bg-muted/30 rounded-lg">
-          <h4 className="font-medium text-sm text-foreground">Avatar Aanpassen</h4>
-          <div className="flex items-center gap-4 mb-3">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={config.showAgentAvatar !== false}
-                onChange={(e) => updateConfig({ showAgentAvatar: e.target.checked })}
-                className="rounded border-gray-300"
-              />
-              <span className="text-sm">Toon Avatar</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={config.showOnlineStatus !== false}
-                onChange={(e) => updateConfig({ showOnlineStatus: e.target.checked })}
-                className="rounded border-gray-300"
-              />
-              <span className="text-sm">Toon Online Status</span>
-            </label>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
-              Avatar Afbeelding URL <span className="text-xs text-muted-foreground">(optioneel - vervangt emoji)</span>
-            </label>
-            <input
-              type="url"
-              value={config.headerAvatarUrl || ''}
-              onChange={(e) => updateConfig({ headerAvatarUrl: e.target.value })}
-              placeholder="https://example.com/avatar.jpg"
-              className="w-full px-4 py-2 bg-background border border-input rounded-lg"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
-              Avatar Emoji <span className="text-xs text-muted-foreground">(als geen afbeelding is ingesteld)</span>
-            </label>
-            <input
-              type="text"
-              value={config.headerAvatarEmoji || ''}
-              onChange={(e) => updateConfig({ headerAvatarEmoji: e.target.value })}
-              placeholder="👤 (standaard)"
-              maxLength={4}
-              className="w-full px-4 py-2 bg-background border border-input rounded-lg text-2xl"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">Header Titel</label>
-              <input
-                type="text"
-                value={config.headerTitle || ''}
-                onChange={(e) => updateConfig({ headerTitle: e.target.value })}
-                placeholder="Chat Support"
-                className="w-full px-4 py-2 bg-background border border-input rounded-lg"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">Header Subtitel</label>
-              <input
-                type="text"
-                value={config.headerSubtitle || ''}
-                onChange={(e) => updateConfig({ headerSubtitle: e.target.value })}
-                placeholder="We helpen je graag!"
-                className="w-full px-4 py-2 bg-background border border-input rounded-lg"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Close Button Customization */}
-      <div className="space-y-4">
-        <h3 className="font-semibold text-foreground">Sluitknop <span className="text-xs text-muted-foreground">(optioneel)</span></h3>
-        <div>
-          <label className="block text-sm font-medium text-foreground mb-2">Sluitknop Icon</label>
-          <RemixiconPicker
-            value={config.headerCloseIcon || 'RiCloseLine'}
-            onChange={(headerCloseIcon) => updateConfig({ headerCloseIcon })}
-          />
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <ColorInput
-            label="Icon Kleur"
-            value={config.headerCloseIconColor || config.headerTextColor}
-            onChange={(headerCloseIconColor) => updateConfig({ headerCloseIconColor })}
-          />
-          <ColorInput
-            label="Hover Icon Kleur"
-            value={config.headerCloseIconHoverColor || ''}
-            onChange={(headerCloseIconHoverColor) => updateConfig({ headerCloseIconHoverColor })}
-          />
-          <ColorInput
-            label="Achtergrond"
-            value={config.headerCloseIconBackgroundColor || ''}
-            onChange={(headerCloseIconBackgroundColor) => updateConfig({ headerCloseIconBackgroundColor })}
-          />
-          <ColorInput
-            label="Hover Achtergrond"
-            value={config.headerCloseIconHoverBackgroundColor || ''}
-            onChange={(headerCloseIconHoverBackgroundColor) => updateConfig({ headerCloseIconHoverBackgroundColor })}
-          />
-        </div>
-      </div>
-
-      {/* Chat Area Styling */}
-      <div className="space-y-4">
-        <h3 className="font-semibold text-foreground">Chat Gebied Styling</h3>
-        <div className="grid grid-cols-2 gap-4">
-          <ColorInput
-            label="Berichten Achtergrond"
-            value={config.chatBackgroundColor || '#f9fafb'}
-            onChange={(chatBackgroundColor) => updateConfig({ chatBackgroundColor })}
-          />
-          <ColorInput
-            label="Typing Indicator Kleur"
-            value={config.typingIndicatorColor || '#6b7280'}
-            onChange={(typingIndicatorColor) => updateConfig({ typingIndicatorColor })}
-          />
-          <ColorInput
-            label="Input Gebied Achtergrond"
-            value={config.inputAreaBackgroundColor || '#ffffff'}
-            onChange={(inputAreaBackgroundColor) => updateConfig({ inputAreaBackgroundColor })}
-          />
-          <ColorInput
-            label="Input Gebied Border"
-            value={config.inputAreaBorderColor || '#f3f4f6'}
-            onChange={(inputAreaBorderColor) => updateConfig({ inputAreaBorderColor })}
-          />
-        </div>
-      </div>
-
-      {/* Message Colors */}
-      <div className="space-y-4">
-        <h3 className="font-semibold text-foreground">Bericht Kleuren</h3>
-        <div className="grid grid-cols-2 gap-4">
-          <ColorInput
-            label="Gebruiker Achtergrond"
-            value={config.userMessageColor}
-            onChange={(userMessageColor) => updateConfig({ userMessageColor })}
-          />
-          <ColorInput
-            label="Gebruiker Tekst"
-            value={config.userMessageTextColor || '#ffffff'}
-            onChange={(userMessageTextColor) => updateConfig({ userMessageTextColor })}
-          />
-          <ColorInput
-            label="Bot Achtergrond"
-            value={config.botMessageColor}
-            onChange={(botMessageColor) => updateConfig({ botMessageColor })}
-          />
-          <ColorInput
-            label="Bot Tekst"
-            value={config.botMessageTextColor || '#1f2937'}
-            onChange={(botMessageTextColor) => updateConfig({ botMessageTextColor })}
-          />
-        </div>
-      </div>
-
-      {/* Input Field Styling */}
-      <div className="space-y-4">
-        <h3 className="font-semibold text-foreground">Input Veld Styling</h3>
-        <div className="grid grid-cols-2 gap-4">
-          <ColorInput
-            label="Border Kleur"
-            value={config.inputBorderColor || '#e5e7eb'}
-            onChange={(inputBorderColor) => updateConfig({ inputBorderColor })}
-          />
-          <ColorInput
-            label="Focus Border"
-            value={config.inputFocusBorderColor || config.headerBackgroundColor}
-            onChange={(inputFocusBorderColor) => updateConfig({ inputFocusBorderColor })}
-          />
-          <ColorInput
-            label="Achtergrond"
-            value={config.inputBackgroundColor || '#ffffff'}
-            onChange={(inputBackgroundColor) => updateConfig({ inputBackgroundColor })}
-          />
-          <ColorInput
-            label="Tekst Kleur"
-            value={config.inputTextColor || '#1f2937'}
-            onChange={(inputTextColor) => updateConfig({ inputTextColor })}
-          />
-        </div>
-        <ColorInput
-          label="Placeholder Kleur"
-          value={config.inputPlaceholderColor || ''}
-          onChange={(inputPlaceholderColor) => updateConfig({ inputPlaceholderColor })}
-        />
-      </div>
-
-      {/* Send Button Customization */}
-      <div className="space-y-4">
-        <h3 className="font-semibold text-foreground">Verzendknop</h3>
-        <div>
-          <label className="block text-sm font-medium text-foreground mb-2">Verzendknop Icon</label>
-          <RemixiconPicker
-            value={config.sendButtonIcon || 'RiSendPlaneLine'}
-            onChange={(sendButtonIcon) => updateConfig({ sendButtonIcon })}
-          />
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <ColorInput
-            label="Achtergrond"
-            value={config.sendButtonBackgroundColor || config.headerBackgroundColor}
-            onChange={(sendButtonBackgroundColor) => updateConfig({ sendButtonBackgroundColor })}
-          />
-          <ColorInput
-            label="Icon Kleur"
-            value={config.sendButtonIconColor || '#ffffff'}
-            onChange={(sendButtonIconColor) => updateConfig({ sendButtonIconColor })}
-          />
-          <ColorInput
-            label="Hover Achtergrond"
-            value={config.sendButtonHoverBackgroundColor || ''}
-            onChange={(sendButtonHoverBackgroundColor) => updateConfig({ sendButtonHoverBackgroundColor })}
-          />
-          <ColorInput
-            label="Hover Icon"
-            value={config.sendButtonHoverIconColor || ''}
-            onChange={(sendButtonHoverIconColor) => updateConfig({ sendButtonHoverIconColor })}
-          />
-        </div>
-      </div>
-
-      {/* Border Radius */}
-      <div className="space-y-4">
-        <h3 className="font-semibold text-foreground">Afronding</h3>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs text-muted-foreground mb-2">Chat Venster (px)</label>
-            <input
-              type="range"
-              min={0}
-              max={50}
-              value={config.chatBorderRadius}
-              onChange={(e) => updateConfig({ chatBorderRadius: parseInt(e.target.value) })}
-              className="w-full"
-            />
-            <div className="text-center text-sm font-medium mt-1">{config.chatBorderRadius}px</div>
-          </div>
-          <div>
-            <label className="block text-xs text-muted-foreground mb-2">Berichten (px)</label>
-            <input
-              type="range"
-              min={0}
-              max={50}
-              value={config.messageBorderRadius}
-              onChange={(e) => updateConfig({ messageBorderRadius: parseInt(e.target.value) })}
-              className="w-full"
-            />
-            <div className="text-center text-sm font-medium mt-1">{config.messageBorderRadius}px</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Advanced Styling */}
-      <div className="space-y-4">
-        <h3 className="font-semibold text-foreground">Geavanceerd</h3>
-
-        {/* Shadow Intensity */}
-        <div>
-          <label className="block text-xs text-muted-foreground mb-2">Schaduw Intensiteit</label>
-          <div className="grid grid-cols-5 gap-2">
-            {[
-              { value: 'none', label: 'Geen' },
-              { value: 'sm', label: 'Klein' },
-              { value: 'md', label: 'Normaal' },
-              { value: 'lg', label: 'Groot' },
-              { value: 'xl', label: 'Extra' },
-            ].map(shadow => (
-              <button
-                key={shadow.value}
-                type="button"
-                onClick={() => updateConfig({ shadowIntensity: shadow.value as any })}
-                className={`
-                  py-2 rounded-lg border-2 text-xs transition-all
-                  ${(config.shadowIntensity || 'md') === shadow.value
-                    ? 'border-primary bg-primary/5 font-semibold'
-                    : 'border-border hover:border-primary/50'
-                  }
-                `}
-              >
-                {shadow.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Border Width */}
-        <div>
-          <label className="block text-xs text-muted-foreground mb-2">Rand Dikte (px)</label>
-          <input
-            type="range"
-            min={0}
-            max={10}
-            value={config.borderWidth || 0}
-            onChange={(e) => updateConfig({ borderWidth: parseInt(e.target.value) })}
-            className="w-full"
-          />
-          <div className="text-center text-sm font-medium mt-1">{config.borderWidth || 0}px</div>
-        </div>
-
-        {/* Backdrop Blur */}
-        <div>
-          <label className="block text-xs text-muted-foreground mb-2">Achtergrond Blur (px)</label>
-          <input
-            type="range"
-            min={0}
-            max={40}
-            value={config.backdropBlur || 0}
-            onChange={(e) => updateConfig({ backdropBlur: parseInt(e.target.value) })}
-            className="w-full"
-          />
-          <div className="text-center text-sm font-medium mt-1">{config.backdropBlur || 0}px</div>
-        </div>
-
-        {/* Glass Effect */}
-        <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+        {/* Glass Effect Toggle */}
+        <div className="flex items-center gap-4 p-4 border rounded-xl bg-white/50 dark:bg-black/20">
           <input
             type="checkbox"
             id="glassEffect"
             checked={config.glassEffect || false}
             onChange={(e) => updateConfig({ glassEffect: e.target.checked })}
+            className="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary"
           />
           <div className="flex-1">
-            <label htmlFor="glassEffect" className="block text-sm font-medium cursor-pointer">
-              Glasmorfisme Effect
-            </label>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Frosted glass look met achtergrond blur
-            </p>
+            <label htmlFor="glassEffect" className="font-medium text-foreground cursor-pointer">Enable Glassmorphism</label>
+            <p className="text-xs text-muted-foreground">Adds a premium frosted glass blur effect to the widget and chat window.</p>
+          </div>
+          {config.glassEffect && (
+            <div className="w-32">
+              <label className="text-xs text-muted-foreground block mb-1">Blur Amount</label>
+              <input
+                type="range" min="0" max="20"
+                value={config.backdropBlur || 8}
+                onChange={(e) => updateConfig({ backdropBlur: parseInt(e.target.value) })}
+                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+              />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Hover Effects */}
+      <div className="space-y-4">
+        <h3 className="font-semibold text-lg text-foreground border-b pb-2">Hover Aesthetics</h3>
+        <div className="grid md:grid-cols-2 gap-6">
+          <div className="space-y-3">
+            <label className="text-sm font-medium">Hover Scale</label>
+            <div className="flex items-center gap-4">
+              <input
+                type="range" min="1.0" max="1.3" step="0.01"
+                value={config.bubbleHoverScale || 1.05}
+                onChange={(e) => updateConfig({ bubbleHoverScale: parseFloat(e.target.value) })}
+                className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+              />
+              <span className="text-sm w-12 text-right">{(config.bubbleHoverScale || 1.05).toFixed(2)}x</span>
+            </div>
+            <p className="text-xs text-muted-foreground">Zoom effect when user hovers the widget.</p>
+          </div>
+
+          <div className="space-y-3">
+            <ColorInput label="Hover Background" value={config.bubbleHoverBackgroundColor || ''} onChange={(v) => updateConfig({ bubbleHoverBackgroundColor: v })} />
           </div>
         </div>
+      </div>
 
-        {/* Gradient Background */}
-        <div className="space-y-3">
-          <label className="block text-sm font-medium text-foreground">
-            Achtergrond Gradient <span className="text-xs text-muted-foreground">(optioneel)</span>
-          </label>
-          <div className="grid grid-cols-2 gap-3">
-            <ColorInput
-              label="Van"
-              value={config.backgroundGradient?.from || config.bubbleBackgroundColor}
-              onChange={(from) => updateConfig({
-                backgroundGradient: {
-                  from,
-                  to: config.backgroundGradient?.to || config.bubbleBackgroundColor,
-                  direction: config.backgroundGradient?.direction || 'to-br'
-                }
-              })}
+      {/* Advanced Border & Shadow */}
+      <div className="space-y-4 pt-4">
+        <div className="grid grid-cols-2 gap-6">
+          <div>
+            <label class="block text-sm font-medium mb-2">Border Radius</label>
+            <input
+              type="range" min="0" max="50"
+              value={config.chatBorderRadius || 16}
+              onChange={(e) => updateConfig({ chatBorderRadius: parseInt(e.target.value) })}
+              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
             />
-            <ColorInput
-              label="Naar"
-              value={config.backgroundGradient?.to || config.bubbleBackgroundColor}
-              onChange={(to) => updateConfig({
-                backgroundGradient: {
-                  from: config.backgroundGradient?.from || config.bubbleBackgroundColor,
-                  to,
-                  direction: config.backgroundGradient?.direction || 'to-br'
-                }
-              })}
-            />
+            <div className="text-right text-xs mt-1 text-muted-foreground">{config.chatBorderRadius}px</div>
           </div>
           <div>
-            <label className="block text-xs text-muted-foreground mb-2">Richting</label>
+            <label class="block text-sm font-medium mb-2">Shadow Intensity</label>
             <select
-              value={config.backgroundGradient?.direction || 'to-br'}
-              onChange={(e) => updateConfig({
-                backgroundGradient: {
-                  from: config.backgroundGradient?.from || config.bubbleBackgroundColor,
-                  to: config.backgroundGradient?.to || config.bubbleBackgroundColor,
-                  direction: e.target.value
-                }
-              })}
-              className="w-full px-4 py-2 bg-background border border-input rounded-lg text-sm"
+              value={config.shadowIntensity || 'md'}
+              onChange={(e) => updateConfig({ shadowIntensity: e.target.value as any })}
+              className="w-full px-3 py-2 bg-background border border-input rounded-lg"
             >
-              <option value="to-t">Naar Boven</option>
-              <option value="to-tr">Naar Rechtsboven</option>
-              <option value="to-r">Naar Rechts</option>
-              <option value="to-br">Naar Rechtsonder</option>
-              <option value="to-b">Naar Onder</option>
-              <option value="to-bl">Naar Linksonder</option>
-              <option value="to-l">Naar Links</option>
-              <option value="to-tl">Naar Linksboven</option>
+              <option value="none">None (Flat)</option>
+              <option value="sm">Small (Subtle)</option>
+              <option value="md">Medium (Standard)</option>
+              <option value="lg">Large (Floating)</option>
+              <option value="xl">Extra Large (Elevated)</option>
             </select>
           </div>
         </div>
@@ -1262,211 +882,122 @@ function StylingTab({ config, updateConfig }: { config: WidgetConfig; updateConf
 // Animations Tab
 function AnimationsTab({ config, updateConfig }: { config: WidgetConfig; updateConfig: (u: Partial<WidgetConfig>) => void }) {
   return (
-    <div className="space-y-6">
-      {/* Enable Animations */}
-      <div className="flex items-start gap-3 p-4 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950/30 dark:to-blue-950/30 rounded-lg border border-purple-200 dark:border-purple-800">
+    <div className="space-y-8">
+      <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 border-l-4 border-purple-500 p-4 rounded-r-lg">
+        <h3 className="font-semibold text-purple-900 dark:text-purple-100 flex items-center gap-2">
+          <RiCheckboxCircleLine size={20} />
+          Physics-Based Animations
+        </h3>
+        <p className="text-sm text-purple-700 dark:text-purple-300 mt-1">
+          Configure smooth, modern entrance and interaction animations.
+        </p>
+      </div>
+
+      <div className="flex items-center gap-3 mb-6">
         <input
           type="checkbox"
           id="enableAnimation"
           checked={config.enableAnimation ?? true}
           onChange={(e) => updateConfig({ enableAnimation: e.target.checked })}
-          className="mt-1"
+          className="w-5 h-5 rounded border-gray-300 text-primary"
         />
-        <div className="flex-1">
-          <label htmlFor="enableAnimation" className="block font-medium text-foreground cursor-pointer">
-            Animaties Inschakelen ✨
-          </label>
-          <p className="text-sm text-muted-foreground mt-1">
-            Geef je widget leven met vloeiende animaties
-          </p>
-        </div>
+        <label htmlFor="enableAnimation" className="font-medium text-lg cursor-pointer">Enable Animations</label>
       </div>
 
       {config.enableAnimation !== false && (
-        <>
-          {/* Animation Type */}
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-3">
-              Animatie Type
-            </label>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-              {[
-                { value: 'slide', label: 'Slide', icon: '→', desc: 'Schuift in' },
-                { value: 'fade', label: 'Fade', icon: '◐', desc: 'Fade in/out' },
-                { value: 'scale', label: 'Scale', icon: '⊕', desc: 'Groeit/krimpt' },
-                { value: 'bounce', label: 'Bounce', icon: '⤒', desc: 'Springt op' },
-                { value: 'flip', label: 'Flip', icon: '⟲', desc: 'Draait om' },
-              ].map(type => (
-                <button
-                  key={type.value}
-                  type="button"
-                  onClick={() => updateConfig({ animationType: type.value as any })}
-                  className={`
-                    p-4 rounded-lg border-2 text-left transition-all
-                    ${(config.animationType || 'slide') === type.value
-                      ? 'border-primary bg-primary/10 scale-105'
-                      : 'border-border hover:border-primary/50 hover:scale-105'
-                    }
-                  `}
-                >
-                  <div className="text-2xl mb-1">{type.icon}</div>
-                  <div className="font-semibold text-sm">{type.label}</div>
-                  <div className="text-xs text-muted-foreground">{type.desc}</div>
-                </button>
-              ))}
-            </div>
-          </div>
+        <div className="space-y-8 animate-in slide-in-from-bottom-2 duration-500">
 
-          {/* Animation Direction */}
-          {(config.animationType === 'slide' || config.animationType === 'flip') && (
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-3">
-                Animatie Richting
-              </label>
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                {[
-                  { value: 'top', label: 'Van Boven', icon: '↓' },
-                  { value: 'bottom', label: 'Van Onder', icon: '↑' },
-                  { value: 'left', label: 'Van Links', icon: '→' },
-                  { value: 'right', label: 'Van Rechts', icon: '←' },
-                  { value: 'center', label: 'Vanuit Centrum', icon: '⊕' },
-                ].map(dir => (
-                  <button
-                    key={dir.value}
-                    type="button"
-                    onClick={() => updateConfig({ animationDirection: dir.value as any })}
-                    className={`
-                      p-3 rounded-lg border-2 text-center transition-all
-                      ${(config.animationDirection || 'bottom') === dir.value
-                        ? 'border-primary bg-primary/10'
-                        : 'border-border hover:border-primary/50'
-                      }
+          {/* Entrance Animation */}
+          <section className="space-y-4">
+            <h4 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground border-b pb-1">Entrance Animation</h4>
+            <div className="grid grid-cols-3 md:grid-cols-5 gap-3">
+              {[
+                { id: 'scale', label: 'Pop In', icon: '✨' },
+                { id: 'slide', label: 'Slide Up', icon: '↑' },
+                { id: 'fade', label: 'Fade In', icon: '▒' },
+                { id: 'bounce', label: 'Bounce', icon: '🏀' },
+                { id: 'flip', label: 'Flip', icon: '↺' }
+              ].map((anim) => (
+                <button
+                  key={anim.id}
+                  onClick={() => updateConfig({ animationType: anim.id as any })}
+                  className={`
+                      flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all
+                      ${config.animationType === anim.id
+                      ? 'border-primary bg-primary/5 shadow-sm text-primary'
+                      : 'border-transparent bg-secondary/50 hover:bg-secondary text-muted-foreground hover:text-foreground'
+                    }
                     `}
-                  >
-                    <div className="text-xl mb-1">{dir.icon}</div>
-                    <div className="font-medium text-xs">{dir.label}</div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Animation Timing */}
-          <div className="space-y-4">
-            <h3 className="font-semibold text-foreground">Timing & Snelheid</h3>
-
-            <div>
-              <label className="block text-xs text-muted-foreground mb-2">
-                Duur (ms)
-              </label>
-              <div className="flex gap-3 items-center">
-                <input
-                  type="range"
-                  min={100}
-                  max={2000}
-                  step={50}
-                  value={config.animationDuration || 500}
-                  onChange={(e) => updateConfig({ animationDuration: parseInt(e.target.value) })}
-                  className="flex-1"
-                />
-                <div className="text-sm font-medium w-20 text-right">{config.animationDuration || 500}ms</div>
-              </div>
-              <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                <span>Snel</span>
-                <span>Langzaam</span>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs text-muted-foreground mb-2">
-                Vertraging (ms)
-              </label>
-              <div className="flex gap-3 items-center">
-                <input
-                  type="range"
-                  min={0}
-                  max={2000}
-                  step={50}
-                  value={config.animationDelay || 0}
-                  onChange={(e) => updateConfig({ animationDelay: parseInt(e.target.value) })}
-                  className="flex-1"
-                />
-                <div className="text-sm font-medium w-20 text-right">{config.animationDelay || 0}ms</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Hover Animation */}
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-3">
-              Hover Animatie
-            </label>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-              {[
-                { value: 'none', label: 'Geen', icon: '○' },
-                { value: 'lift', label: 'Lift', icon: '↟' },
-                { value: 'grow', label: 'Grow', icon: '⊕' },
-                { value: 'pulse', label: 'Pulse', icon: '◉' },
-                { value: 'rotate', label: 'Rotate', icon: '↻' },
-              ].map(hover => (
-                <button
-                  key={hover.value}
-                  type="button"
-                  onClick={() => updateConfig({ hoverAnimation: hover.value as any })}
-                  className={`
-                    p-3 rounded-lg border-2 text-center transition-all
-                    ${(config.hoverAnimation || 'lift') === hover.value
-                      ? 'border-primary bg-primary/10'
-                      : 'border-border hover:border-primary/50'
-                    }
-                  `}
                 >
-                  <div className="text-xl mb-1">{hover.icon}</div>
-                  <div className="font-medium text-xs">{hover.label}</div>
+                  <span className="text-2xl mb-1">{anim.icon}</span>
+                  <span className="text-xs font-medium">{anim.label}</span>
                 </button>
               ))}
             </div>
-          </div>
+          </section>
 
-          {/* Chat Window Animation */}
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-3">
-              Chat Venster Animatie
-            </label>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+          {/* Interaction/Hover */}
+          <section className="space-y-4">
+            <h4 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground border-b pb-1">Hover Interaction</h4>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {[
-                { value: 'none', label: 'Geen', desc: 'Direct tonen' },
-                { value: 'slide-up', label: 'Slide Up', desc: 'Van onder' },
-                { value: 'slide-down', label: 'Slide Down', desc: 'Van boven' },
-                { value: 'fade', label: 'Fade', desc: 'Fade in' },
-                { value: 'scale', label: 'Scale', desc: 'Zoom in' },
-              ].map(anim => (
+                { id: 'lift', label: 'Lift Up', icon: '↟' },
+                { id: 'grow', label: 'Scale Up', icon: '↗' },
+                { id: 'pulse', label: 'Pulse', icon: '◎' },
+                { id: 'rotate', label: 'Wiggle', icon: '≈' },
+                { id: 'none', label: 'None', icon: '×' }
+              ].map((anim) => (
                 <button
-                  key={anim.value}
-                  type="button"
-                  onClick={() => updateConfig({ chatAnimation: anim.value as any })}
+                  key={anim.id}
+                  onClick={() => updateConfig({ hoverAnimation: anim.id as any })}
                   className={`
-                    p-3 rounded-lg border-2 text-left transition-all
-                    ${(config.chatAnimation || 'slide-up') === anim.value
-                      ? 'border-primary bg-primary/10'
-                      : 'border-border hover:border-primary/50'
+                      flex items-center gap-3 p-3 rounded-xl border transition-all text-left
+                      ${config.hoverAnimation === anim.id
+                      ? 'border-primary ring-1 ring-primary/20 bg-primary/5 text-primary'
+                      : 'border-border hover:border-primary/30'
                     }
-                  `}
+                    `}
                 >
-                  <div className="font-semibold text-xs mb-0.5">{anim.label}</div>
-                  <div className="text-[10px] text-muted-foreground">{anim.desc}</div>
+                  <span className="text-lg">{anim.icon}</span>
+                  <span className="text-sm font-medium">{anim.label}</span>
                 </button>
               ))}
             </div>
-          </div>
+          </section>
 
-          {/* Preview Note */}
-          <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-            <p className="text-sm text-foreground">
-              💡 <strong>Tip:</strong> Test je animaties op de live preview om te zien hoe ze er uit zien!
-            </p>
-          </div>
-        </>
+          {/* Chat Window Open */}
+          <section className="space-y-4">
+            <h4 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground border-b pb-1">Window Open Transition</h4>
+            <div className="grid grid-cols-2 gap-4">
+              <div onClick={() => updateConfig({ chatAnimation: 'slide-up' })} className={`cursor-pointer p-4 rounded-xl border transition-all ${config.chatAnimation === 'slide-up' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/30'}`}>
+                <div className="font-medium mb-1">Slide Up</div>
+                <div className="text-xs text-muted-foreground">Window slides up from the bottom (Modern iOS style)</div>
+              </div>
+              <div onClick={() => updateConfig({ chatAnimation: 'scale' })} className={`cursor-pointer p-4 rounded-xl border transition-all ${config.chatAnimation === 'scale' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/30'}`}>
+                <div className="font-medium mb-1">Scale / Zoom</div>
+                <div className="text-xs text-muted-foreground">Window zooms out from the bubble (Material Design)</div>
+              </div>
+            </div>
+          </section>
+
+          {/* Timing Sliders */}
+          <section className="bg-card p-5 rounded-xl border space-y-6">
+            <div>
+              <div className="flex justify-between mb-2">
+                <label className="text-sm font-medium">Entrance Delay</label>
+                <span className="text-xs font-mono bg-muted px-2 py-0.5 rounded">{config.animationDelay || 0}ms</span>
+              </div>
+              <input
+                type="range" min="0" max="3000" step="100"
+                value={config.animationDelay || 0}
+                onChange={(e) => updateConfig({ animationDelay: parseInt(e.target.value) })}
+                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+              />
+              <p className="text-xs text-muted-foreground mt-1">Wait before showing the widget after page load</p>
+            </div>
+          </section>
+
+        </div>
       )}
     </div>
   );

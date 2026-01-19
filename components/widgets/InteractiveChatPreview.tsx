@@ -301,9 +301,13 @@ export function InteractiveChatPreview({ config }: InteractiveChatPreviewProps) 
                         ? { left: 0 }
                         : { right: 0 }
                     ),
-                    backgroundColor: '#ffffff',
+                    backgroundColor: config.glassEffect
+                      ? (config.theme === 'dark' ? 'rgba(20, 20, 20, 0.85)' : 'rgba(255, 255, 255, 0.85)')
+                      : '#ffffff',
+                    backdropFilter: config.glassEffect ? `blur(${config.backdropBlur || 12}px)` : 'none',
+                    border: config.glassEffect ? '1px solid rgba(255,255,255,0.2)' : 'none',
                     borderRadius: `${config.chatBorderRadius}px`,
-                    boxShadow: '0 20px 60px rgba(0, 0, 0, 0.2)',
+                    boxShadow: config.shadowIntensity === 'none' ? 'none' : '0 20px 60px rgba(0, 0, 0, 0.2)',
                     display: 'flex',
                     flexDirection: 'column',
                     overflow: 'hidden',
@@ -312,7 +316,7 @@ export function InteractiveChatPreview({ config }: InteractiveChatPreviewProps) 
                   {/* Chat Header */}
                   <div
                     style={{
-                      backgroundColor: config.headerBackgroundColor,
+                      backgroundColor: config.glassEffect ? 'transparent' : config.headerBackgroundColor,
                       color: config.headerTextColor,
                       padding: '16px',
                       display: 'flex',
@@ -378,7 +382,7 @@ export function InteractiveChatPreview({ config }: InteractiveChatPreviewProps) 
                       display: 'flex',
                       flexDirection: 'column',
                       gap: '12px',
-                      backgroundColor: config.chatBackgroundColor || '#f9fafb',
+                      backgroundColor: config.glassEffect ? 'transparent' : (config.chatBackgroundColor || '#f9fafb'),
                     }}
                   >
                     {messages.map((msg, idx) => (
@@ -455,8 +459,10 @@ export function InteractiveChatPreview({ config }: InteractiveChatPreviewProps) 
                   <div
                     style={{
                       padding: '16px',
-                      borderTop: `1px solid ${config.inputAreaBorderColor || '#e5e7eb'}`,
-                      backgroundColor: config.inputAreaBackgroundColor || '#ffffff',
+                      borderTop: `1px solid ${config.glassEffect ? 'rgba(255,255,255,0.2)' : (config.inputAreaBorderColor || '#e5e7eb')}`,
+                      backgroundColor: config.glassEffect
+                        ? (config.theme === 'dark' ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.4)')
+                        : (config.inputAreaBackgroundColor || '#ffffff'),
                     }}
                   >
                     <div className="flex gap-2">
