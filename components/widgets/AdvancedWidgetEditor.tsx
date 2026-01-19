@@ -850,7 +850,7 @@ function StylingTab({ config, updateConfig }: { config: WidgetConfig; updateConf
       <div className="space-y-4 pt-4">
         <div className="grid grid-cols-2 gap-6">
           <div>
-            <label class="block text-sm font-medium mb-2">Border Radius</label>
+            <label className="block text-sm font-medium mb-2">Border Radius</label>
             <input
               type="range" min="0" max="50"
               value={config.chatBorderRadius || 16}
@@ -860,7 +860,7 @@ function StylingTab({ config, updateConfig }: { config: WidgetConfig; updateConf
             <div className="text-right text-xs mt-1 text-muted-foreground">{config.chatBorderRadius}px</div>
           </div>
           <div>
-            <label class="block text-sm font-medium mb-2">Shadow Intensity</label>
+            <label className="block text-sm font-medium mb-2">Shadow Intensity</label>
             <select
               value={config.shadowIntensity || 'md'}
               onChange={(e) => updateConfig({ shadowIntensity: e.target.value as any })}
