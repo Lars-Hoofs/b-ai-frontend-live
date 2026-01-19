@@ -14,6 +14,7 @@ import {
 export interface WidgetConfig {
   // Basic
   name: string;
+  theme?: 'light' | 'dark' | 'system';
   widgetType: 'bubble' | 'searchbar' | 'custom-box';
 
   // Layout
