@@ -130,7 +130,7 @@ export function AvatarGradientEditor({ config, updateConfig }: AvatarGradientEdi
                     `}
                                         title={dir}
                                         style={{
-                                            background: `linear-gradient(${dir.replace('to-', 'to ')}, ${config.avatarGradient.from}, ${config.avatarGradient.to})`,
+                                            background: `linear-gradient(${dir.replace('to-', 'to ')}, ${config.avatarGradient?.from || '#ff6b6b'}, ${config.avatarGradient?.to || '#feca57'})`,
                                         }}
                                     />
                                 ))}
@@ -225,7 +225,7 @@ export function AvatarGradientEditor({ config, updateConfig }: AvatarGradientEdi
                                 style={{
                                     width: `${config.avatarSize || 44}px`,
                                     height: `${config.avatarSize || 44}px`,
-                                    background: `linear-gradient(${config.avatarGradient.direction.replace('to-', 'to ')}, ${config.avatarGradient.from}, ${config.avatarGradient.to})`,
+                                    background: `linear-gradient(${config.avatarGradient!.direction.replace('to-', 'to ')}, ${config.avatarGradient!.from}, ${config.avatarGradient!.to})`,
                                     border: config.avatarBorderWidth
                                         ? `${config.avatarBorderWidth}px solid ${config.avatarBorderColor || '#ffffff'}`
                                         : undefined,
