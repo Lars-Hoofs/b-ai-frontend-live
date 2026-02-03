@@ -73,7 +73,7 @@ export interface WidgetConfig {
   hoverAnimation?: 'scale' | 'lift' | 'pulse' | 'none' | 'grow' | 'rotate';
 
   // Icon/Image Relationship
-  imageIconRelation?: 'icon-only' | 'image-only' | 'image-bg-icon-overlay' | 'split';
+  imageIconRelation?: 'icon-only' | 'image-only' | 'image-bg-icon-overlay' | 'split' | 'cover' | 'overlay' | 'side-by-side';
   imagePosition?: 'left' | 'right' | 'top' | 'bottom' | 'background';
   imageFullHeight?: boolean;
 
@@ -137,7 +137,7 @@ export interface WidgetConfig {
   backgroundGradient?: string;
   backdropBlur?: number;
   borderWidth?: number;
-  shadowIntensity?: number;
+  shadowIntensity?: 'none' | 'sm' | 'md' | 'lg' | 'xl';
   glassEffect?: boolean;
 
   // Chat Window Customization
