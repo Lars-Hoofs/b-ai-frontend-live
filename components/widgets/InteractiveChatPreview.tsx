@@ -130,7 +130,6 @@ export function InteractiveChatPreview({ config, isOpen, setIsOpen, isPreview = 
       whileHover: (block.hoverStyle ? block.hoverStyle : { scale: 1.02, opacity: 0.95 }) as any, // Default subtle hover if no specific style
       whileTap: { scale: 0.95 },
       onClick: handleClick,
-      layout: true, // Auto layout animations
     };
 
     return (
@@ -146,7 +145,7 @@ export function InteractiveChatPreview({ config, isOpen, setIsOpen, isPreview = 
   };
 
   return (
-    <div style={positionStyles} className="pointer-events-auto z-50">
+    <div style={positionStyles} className="pointer-events-auto">
       <AnimatePresence>
         {/* Chat Window */}
         {isOpen && (
