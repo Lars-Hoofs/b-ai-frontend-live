@@ -656,6 +656,59 @@ export default function AdvancedWidgetEditor({ config, onChange }: { config: Wid
     setSelectedBlockId(newBlock.id);
   };
 
+  // === CHAT BUILDER FUNCTIONS ===
+  const updateChatStructure = (newStructure: ChatBlock[]) => {
+    onChange({ ...config, chatStructure: newStructure, chatMode: 'advanced' });
+  };
+
+  const updateChatBlock = (id: string, updates: Partial<ChatBlock>) => {
+    const updateRecursive = (blocks: ChatBlock[]): ChatBlock[] => {
+      return blocks.map(b => {
+        if (b.id === id) return { ...b, ...updates };
+        if (b.children) return { ...b, children: updateRecursive(b.children) };
+        return b;
+      });
+    };
+    updateChatStructure(updateRecursive(config.chatStructure || []));
+  };
+
+  const deleteChatBlock = (id: string) => {
+    const deleteRecursive = (blocks: ChatBlock[]): ChatBlock[] => {
+      const filtered = blocks.filter(b => b.id !== id);
+      return filtered.map(b => {
+        if (!b.children || b.children.length === 0) return b;
+        const newChildren = deleteRecursive(b.children);
+        return { ...b, children: newChildren.length > 0 ? newChildren : undefined };
+      });
+    };
+    updateChatStructure(deleteRecursive(config.chatStructure || []));
+    if (selectedChatBlockId === id) setSelectedChatBlockId(null);
+  };
+
+  const addChatBlock = (parentId: string | null, type: ChatBlock['type']) => {
+    const newBlock: ChatBlock = {
+      id: nanoid(),
+      type,
+      content: type === 'text' ? 'New Text' : type === 'button' ? 'Click Me' : type === 'branding' ? 'Powered by AI' : undefined,
+      placeholder: type === 'input' ? 'Type a message...' : undefined,
+      style: type === 'container' ? { padding: '10px', backgroundColor: '#f9fafb' } : undefined,
+    };
+
+    if (!parentId) {
+      updateChatStructure([...(config.chatStructure || []), newBlock]);
+    } else {
+      const addRecursive = (blocks: ChatBlock[]): ChatBlock[] => {
+        return blocks.map(b => {
+          if (b.id === parentId) return { ...b, children: [...(b.children || []), newBlock] };
+          if (b.children) return { ...b, children: addRecursive(b.children) };
+          return b;
+        });
+      };
+      updateChatStructure(addRecursive(config.chatStructure || []));
+    }
+    setSelectedChatBlockId(newBlock.id);
+  };
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
@@ -778,42 +831,268 @@ export default function AdvancedWidgetEditor({ config, onChange }: { config: Wid
           </div>
         </div>
       ) : activeTab === 'chat-builder' ? (
-        // CHAT BUILDER - Similar structure to launcher
-        <div className="flex-1 p-6">
-          <div className="max-w-4xl mx-auto">
-            <div className="bg-card border border-border rounded-lg p-6 mb-6">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold">Chat Structure Builder</h3>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground uppercase font-bold">Load Template:</span>
-                  <div className="flex bg-background border border-border rounded-md p-1 gap-1">
-                    {CHAT_TEMPLATES.map(t => (
-                      <button
-                        key={t.id}
-                        className="px-3 py-1 text-xs hover:bg-muted rounded transition-colors"
-                        onClick={() => {
-                          if (confirm('Replace current chat structure with this template?')) {
-                            onChange({ ...config, chatStructure: t.structure, chatMode: 'advanced' });
-                          }
-                        }}
-                        title={t.description}
-                      >
-                        {t.name}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-              <div className="text-sm text-muted-foreground mb-4">
-                Build your custom chat layout with drag & drop blocks. Chat Builder coming soon - currently showing default structure!
-              </div>
-              <div className="bg-muted/20 border border-border rounded-lg p-8 text-center">
-                <RemixIcons.RiLayoutMasonryLine size={48} className="mx-auto text-muted-foreground mb-4" />
-                <p className="text-muted-foreground mb-2">Chat Builder UI</p>
-                <p className="text-xs text-muted-foreground">This will be a full drag & drop editor like the Launcher Builder</p>
-                <p className="text-xs text-muted-foreground mt-2">For now, use templates or edit chatStructure directly</p>
+        // CHAT BUILDER - Full 3 Column Layout (like Launcher)
+        <div className="flex-1 grid grid-cols-[280px_1fr_320px] overflow-hidden">
+          {/* LEFT: Chat Structure Tree */}
+          <div className="border-r border-border bg-muted/5 flex flex-col min-h-0">
+            <div className="p-3 border-b border-border/50 flex justify-between items-center shrink-0">
+              <h3 className="text-xs font-semibold uppercase text-muted-foreground">Chat Blocks</h3>
+              <button
+                onClick={() => {
+                  const newStructure = config.chatStructure && config.chatStructure.length > 0
+                    ? config.chatStructure
+                    : DEFAULT_CHAT_STRUCTURE;
+                  onChange({ ...config, chatStructure: newStructure, chatMode: 'advanced' });
+                }}
+                className="text-xs bg-primary text-primary-foreground p-1.5 rounded hover:bg-primary/90 flex items-center gap-1"
+              >
+                <RemixIcons.RiAddLine /> <span className="text-[10px]">Init</span>
+              </button>
+            </div>
+
+            {/* Template Loader */}
+            <div className="p-2 border-b border-border/50 shrink-0">
+              <label className="text-[10px] text-muted-foreground uppercase font-bold mb-1 block">Templates:</label>
+              <div className="grid grid-cols-2 gap-1">
+                {CHAT_TEMPLATES.map(t => (
+                  <button
+                    key={t.id}
+                    className="px-2 py-1 text-[10px] bg-background border border-border hover:bg-muted rounded transition-colors"
+                    onClick={() => {
+                      if (confirm(`Load "${t.name}" template?`)) {
+                        onChange({ ...config, chatStructure: t.structure, chatMode: 'advanced' });
+                        if (t.structure.length > 0) setSelectedChatBlockId(t.structure[0].id);
+                      }
+                    }}
+                    title={t.description}
+                  >
+                    {t.name}
+                  </button>
+                ))}
               </div>
             </div>
+
+            {/* Chat Structure List */}
+            <div className="flex-1 overflow-y-auto p-2 space-y-1">
+              {config.chatStructure && config.chatStructure.length > 0 ? (
+                <>
+                  <div className="space-y-1">
+                    {config.chatStructure.map(block => (
+                      <div
+                        key={block.id}
+                        className={`p-2 rounded text-xs border cursor-pointer transition-colors group ${selectedChatBlockId === block.id
+                          ? 'bg-primary/10 border-primary text-primary font-medium'
+                          : 'bg-background border-border hover:bg-muted'
+                          }`}
+                        onClick={() => setSelectedChatBlockId(block.id)}
+                      >
+                        <div className="flex items-center gap-2">
+                          {block.type === 'header' && <RemixIcons.RiLayoutTopLine size={14} />}
+                          {block.type === 'messages' && <RemixIcons.RiMessage3Line size={14} />}
+                          {block.type === 'input' && <RemixIcons.RiInputMethodLine size={14} />}
+                          {block.type === 'container' && <RemixIcons.RiLayoutLine size={14} />}
+                          {block.type === 'text' && <RemixIcons.RiText size={14} />}
+                          {block.type === 'button' && <RemixIcons.RiCheckboxCircleLine size={14} />}
+                          {block.type === 'divider' && <RemixIcons.RiSeparator size={14} />}
+                          {block.type === 'branding' && <RemixIcons.RiSparklingLine size={14} />}
+                          <span className="flex-1 font-medium uppercase">{block.type}</span>
+                          {block.children && block.children.length > 0 && (
+                            <span className="text-[10px] text-muted-foreground">({block.children.length})</span>
+                          )}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (confirm(`Delete ${block.type} block?`)) deleteChatBlock(block.id);
+                            }}
+                            className="opacity-0 group-hover:opacity-100 p-1 hover:bg-destructive/10 rounded transition-opacity"
+                          >
+                            <RemixIcons.RiDeleteBinLine size={12} className="text-destructive" />
+                          </button>
+                        </div>
+                        {block.content && (
+                          <div className="text-[10px] text-muted-foreground mt-1 truncate">{block.content}</div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Add Block Dropdown */}
+                  <div className="pt-2 mt-2 border-t border-border/50">
+                    <label className="text-[10px] text-muted-foreground uppercase font-bold mb-1 block">Add Block:</label>
+                    <div className="grid grid-cols-2 gap-1">
+                      {(['header', 'messages', 'input', 'container', 'text', 'button', 'divider', 'branding'] as const).map(type => (
+                        <button
+                          key={type}
+                          onClick={() => addChatBlock(null, type)}
+                          className="px-2 py-1 text-[10px] bg-background border border-border hover:bg-primary/10 hover:border-primary rounded transition-colors capitalize"
+                        >
+                          {type}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="text-center text-muted-foreground text-xs py-8">
+                  <RemixIcons.RiLayoutMasonryLine size={32} className="mx-auto mb-2 opacity-50" />
+                  <p>No chat structure</p>
+                  <p className="text-[10px] mt-1">Click "Init" or load a template</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* CENTER: Live Preview */}
+          <div className="bg-gradient-to-br from-muted/20 to-background flex items-center justify-center p-6 overflow-auto">
+            <div className="w-full max-w-md">
+              <InteractiveChatPreview config={config} isOpen={true} setIsOpen={() => { }} isPreview={true} />
+            </div>
+          </div>
+
+          {/* RIGHT: Properties Panel */}
+          <div className="border-l border-border bg-background flex flex-col min-h-0 overflow-y-auto p-4 space-y-4">
+            <h3 className="text-sm font-semibold">Chat Block Properties</h3>
+            {selectedChatBlockId && config.chatStructure ? (
+              (() => {
+                const findBlock = (blocks: ChatBlock[]): ChatBlock | null => {
+                  for (const b of blocks) {
+                    if (b.id === selectedChatBlockId) return b;
+                    if (b.children) {
+                      const found = findBlock(b.children);
+                      if (found) return found;
+                    }
+                  }
+                  return null;
+                };
+                const block = findBlock(config.chatStructure);
+
+                if (!block) return <p className="text-xs text-muted-foreground">Block not found</p>;
+
+                return (
+                  <div className="space-y-4">
+                    {/* Block Type */}
+                    <div>
+                      <label className="text-xs font-medium block mb-1">Block Type</label>
+                      <div className="px-3 py-2 bg-muted rounded text-xs font-mono uppercase">{block.type}</div>
+                    </div>
+
+                    {/* Content (for text, button, branding) */}
+                    {(block.type === 'text' || block.type === 'button' || block.type === 'branding') && (
+                      <div>
+                        <label className="text-xs font-medium block mb-1">Content</label>
+                        <input
+                          type="text"
+                          value={block.content || ''}
+                          onChange={(e) => updateChatBlock(block.id, { content: e.target.value })}
+                          className="w-full px-2 py-1.5 text-xs border border-border rounded bg-background"
+                          placeholder="Enter text..."
+                        />
+                      </div>
+                    )}
+
+                    {/* Placeholder (for input) */}
+                    {block.type === 'input' && (
+                      <div>
+                        <label className="text-xs font-medium block mb-1">Placeholder</label>
+                        <input
+                          type="text"
+                          value={block.placeholder || ''}
+                          onChange={(e) => updateChatBlock(block.id, { placeholder: e.target.value })}
+                          className="w-full px-2 py-1.5 text-xs border border-border rounded bg-background"
+                          placeholder="Type a message..."
+                        />
+                      </div>
+                    )}
+
+                    {/* Icon (for buttons) */}
+                    {block.type === 'button' && (
+                      <div>
+                        <label className="text-xs font-medium block mb-1">Icon (Remix Icon name)</label>
+                        <input
+                          type="text"
+                          value={block.icon || ''}
+                          onChange={(e) => updateChatBlock(block.id, { icon: e.target.value })}
+                          className="w-full px-2 py-1.5 text-xs border border-border rounded bg-background"
+                          placeholder="RiSendPlaneFill"
+                        />
+                      </div>
+                    )}
+
+                    {/* onClick Action (for buttons) */}
+                    {block.type === 'button' && (
+                      <div>
+                        <label className="text-xs font-medium block mb-1">onClick Action</label>
+                        <select
+                          value={block.onClick || 'send-message'}
+                          onChange={(e) => updateChatBlock(block.id, { onClick: e.target.value as any })}
+                          className="w-full px-2 py-1.5 text-xs border border-border rounded bg-background"
+                        >
+                          <option value="send-message">Send Message</option>
+                          <option value="close-chat">Close Chat</option>
+                          <option value="open-url">Open URL</option>
+                          <option value="custom">Custom</option>
+                        </select>
+                      </div>
+                    )}
+
+                    {/* URL (if onClick is open-url) */}
+                    {block.type === 'button' && block.onClick === 'open-url' && (
+                      <div>
+                        <label className="text-xs font-medium block mb-1">URL</label>
+                        <input
+                          type="text"
+                          value={block.url || ''}
+                          onChange={(e) => updateChatBlock(block.id, { url: e.target.value })}
+                          className="w-full px-2 py-1.5 text-xs border border-border rounded bg-background"
+                          placeholder="https://example.com"
+                        />
+                      </div>
+                    )}
+
+                    {/* Position (for header/branding) */}
+                    {(block.type === 'header' || block.type === 'branding') && (
+                      <div>
+                        <label className="text-xs font-medium block mb-1">Position</label>
+                        <select
+                          value={block.position || 'top'}
+                          onChange={(e) => updateChatBlock(block.id, { position: e.target.value as any })}
+                          className="w-full px-2 py-1.5 text-xs border border-border rounded bg-background"
+                        >
+                          <option value="top">Top</option>
+                          <option value="bottom">Bottom</option>
+                          <option value="left">Left</option>
+                          <option value="right">Right</option>
+                        </select>
+                      </div>
+                    )}
+
+                    {/* Mobile Hidden */}
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id="mobileHidden"
+                        checked={block.mobileHidden || false}
+                        onChange={(e) => updateChatBlock(block.id, { mobileHidden: e.target.checked })}
+                        className="w-4 h-4"
+                      />
+                      <label htmlFor="mobileHidden" className="text-xs font-medium">Hide on Mobile</label>
+                    </div>
+
+                    {/* Style Editor */}
+                    <div className="pt-3 border-t">
+                      <label className="text-xs font-medium block mb-2">Styles</label>
+                      <StyleEditor
+                        style={block.style || {}}
+                        onChange={(s) => updateChatBlock(block.id, { style: s })}
+                        onHoverChange={(s) => updateChatBlock(block.id, { hoverStyle: s })}
+                      />
+                    </div>
+                  </div>
+                );
+              })()
+            ) : (
+              <p className="text-xs text-muted-foreground">Select a block to edit its properties</p>
+            )}
           </div>
         </div>
       ) : (
