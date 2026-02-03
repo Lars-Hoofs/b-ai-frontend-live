@@ -57,7 +57,7 @@ export interface WidgetConfig {
   bubbleIcon?: string;
   bubbleText?: string;
   bubbleShape?: 'circle' | 'square' | 'rounded-square';
-  bubbleSize?: 'small' | 'medium' | 'large';
+  bubbleSize?: 'small' | 'medium' | 'large' | 'custom';
   bubbleWidth?: number;
   bubbleHeight?: number;
   bubbleImageUrl?: string;
