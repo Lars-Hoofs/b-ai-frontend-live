@@ -16,6 +16,22 @@ interface LauncherBlock {
   mobileHidden?: boolean;
 }
 
+interface ChatBlock {
+  id: string;
+  type: 'header' | 'messages' | 'input' | 'container' | 'text' | 'button' | 'divider' | 'branding';
+  content?: string;
+  style?: Record<string, any>;
+  className?: string;
+  children?: ChatBlock[];
+  position?: 'top' | 'bottom' | 'left' | 'right';
+  placeholder?: string;
+  icon?: string;
+  onClick?: 'send-message' | 'close-chat' | 'custom' | 'open-url';
+  url?: string;
+  hoverStyle?: Record<string, any>;
+  mobileHidden?: boolean;
+}
+
 export function InteractiveChatPreview({ config, isOpen, setIsOpen, isPreview = false }: {
   config: WidgetConfig,
   isOpen: boolean,
@@ -144,6 +160,103 @@ export function InteractiveChatPreview({ config, isOpen, setIsOpen, isPreview = 
     );
   };
 
+  // Render Chat Blocks Recursively
+  const renderChatBlock = (block: ChatBlock): React.ReactNode => {
+    const baseStyle: any = {
+      ...block.style,
+    };
+
+    const key = block.id;
+
+    switch (block.type) {
+      case 'header':
+        return (
+          <div key={key} style={{ ...baseStyle, padding: baseStyle.padding || '16px', borderBottom: baseStyle.borderBottom || '1px solid #eee', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            {block.children ? block.children.map(renderChatBlock) : (
+              <>
+                <div>
+                  <span className="font-bold block">{config.headerTitle || 'Chat'}</span>
+                  <span className="text-xs opacity-70 block">{config.headerSubtitle || 'We are online'}</span>
+                </div>
+                <button onClick={() => setIsOpen(false)} className="opacity-70 hover:opacity-100">✕</button>
+              </>
+            )}
+          </div>
+        );
+
+      case 'messages':
+        return (
+          <div key={key} style={{ ...baseStyle, flex: baseStyle.flex || 1, overflowY: 'auto', padding: baseStyle.padding || '16px' }}>
+            <div className="flex gap-2">
+              <div className="w-8 h-8 rounded-full bg-gray-200 flex-shrink-0"></div>
+              <div className="bg-white p-3 rounded-2xl rounded-tl-none shadow-sm text-sm text-gray-800 border border-gray-100 max-w-[80%]">
+                {config.greeting || "Hello! How can I help you today?"}
+              </div>
+            </div>
+            <div className="text-center text-xs text-gray-400 mt-4">Preview Mode</div>
+            {block.children && block.children.map(renderChatBlock)}
+          </div>
+        );
+
+      case 'input':
+        return (
+          <div key={key} style={{ ...baseStyle, padding: baseStyle.padding || '12px', borderTop: baseStyle.borderTop || '1px solid #eee' }}>
+            <div className="flex gap-2 items-center">
+              <div className="flex-1 bg-gray-100 rounded-full px-4 py-2 text-sm text-gray-500">
+                {block.placeholder || config.placeholder || "Type a message..."}
+              </div>
+              {block.children && block.children.map(renderChatBlock)}
+            </div>
+          </div>
+        );
+
+      case 'container':
+        return (
+          <div key={key} style={baseStyle}>
+            {block.children && block.children.map(renderChatBlock)}
+          </div>
+        );
+
+      case 'text':
+        return (
+          <div key={key} style={baseStyle}>
+            {block.content || 'Text Block'}
+          </div>
+        );
+
+      case 'button':
+        const Icon = block.icon && (RemixIcons as any)[block.icon] ? (RemixIcons as any)[block.icon] : RemixIcons.RiSendPlaneFill;
+        return (
+          <button
+            key={key}
+            style={baseStyle}
+            onClick={() => {
+              if (block.onClick === 'close-chat') setIsOpen(false);
+              if (block.onClick === 'open-url' && block.url) window.open(block.url, '_blank');
+            }}
+            className="hover:opacity-80 transition-opacity"
+          >
+            {block.icon && <Icon size={16} />}
+            {block.content}
+          </button>
+        );
+
+      case 'divider':
+        return (
+          <div key={key} style={{ height: '1px', backgroundColor: '#eee', ...baseStyle }}></div>
+        );
+
+      case 'branding':
+        return (
+          <div key={key} style={{ textAlign: 'center', padding: '8px', fontSize: '11px', color: '#999', ...baseStyle }}>
+            {block.content || 'Powered by Your Brand'}
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <div style={positionStyles} className="pointer-events-auto">
       <AnimatePresence>
@@ -164,34 +277,42 @@ export function InteractiveChatPreview({ config, isOpen, setIsOpen, isPreview = 
               flexDirection: 'column',
               overflow: 'hidden',
               marginBottom: 16,
-              // transformOrigin based on position would be cool but center bottom is fine
             }}
           >
-            {/* Fake Chat Header */}
-            <div style={{ padding: 16, borderBottom: '1px solid #eee', background: config.headerBackgroundColor || '#fff', color: config.headerTextColor || '#000' }}>
-              <div className="flex justify-between items-center">
-                <div>
-                  <span className="font-bold block">{config.headerTitle || 'Chat'}</span>
-                  <span className="text-xs opacity-70 block">{config.headerSubtitle || 'We are online'}</span>
+            {/* Render Custom Chat Structure OR Default Layout */}
+            {config.chatMode === 'advanced' && config.chatStructure && config.chatStructure.length > 0 ? (
+              // ADVANCED MODE: Render chatStructure
+              config.chatStructure.map(block => renderChatBlock(block as ChatBlock))
+            ) : (
+              // SIMPLE MODE: Default Layout
+              <>
+                {/* Fake Chat Header */}
+                <div style={{ padding: 16, borderBottom: '1px solid #eee', background: config.headerBackgroundColor || '#fff', color: config.headerTextColor || '#000' }}>
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <span className="font-bold block">{config.headerTitle || 'Chat'}</span>
+                      <span className="text-xs opacity-70 block">{config.headerSubtitle || 'We are online'}</span>
+                    </div>
+                    <button onClick={() => setIsOpen(false)} className="opacity-70 hover:opacity-100">✕</button>
+                  </div>
                 </div>
-                <button onClick={() => setIsOpen(false)} className="opacity-70 hover:opacity-100">✕</button>
-              </div>
-            </div>
-            <div className="flex-1 bg-gray-50 p-4">
-              <div className="flex gap-2">
-                <div className="w-8 h-8 rounded-full bg-gray-200 flex-shrink-0"></div>
-                <div className="bg-white p-3 rounded-2xl rounded-tl-none shadow-sm text-sm text-gray-800 border border-gray-100 max-w-[80%]">
-                  {config.greeting || "Hello! How can I help you today?"}
+                <div className="flex-1 bg-gray-50 p-4">
+                  <div className="flex gap-2">
+                    <div className="w-8 h-8 rounded-full bg-gray-200 flex-shrink-0"></div>
+                    <div className="bg-white p-3 rounded-2xl rounded-tl-none shadow-sm text-sm text-gray-800 border border-gray-100 max-w-[80%]">
+                      {config.greeting || "Hello! How can I help you today?"}
+                    </div>
+                  </div>
+                  <div className="text-center text-xs text-gray-400 mt-8">Preview Mode</div>
                 </div>
-              </div>
-              <div className="text-center text-xs text-gray-400 mt-8">Preview Mode</div>
-            </div>
-            {/* Input Placeholder */}
-            <div className="p-3 border-t bg-white">
-              <div className="w-full bg-gray-100 rounded-full px-4 py-2 text-sm text-gray-500">
-                {config.placeholder || "Type a message..."}
-              </div>
-            </div>
+                {/* Input Placeholder */}
+                <div className="p-3 border-t bg-white">
+                  <div className="w-full bg-gray-100 rounded-full px-4 py-2 text-sm text-gray-500">
+                    {config.placeholder || "Type a message..."}
+                  </div>
+                </div>
+              </>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
