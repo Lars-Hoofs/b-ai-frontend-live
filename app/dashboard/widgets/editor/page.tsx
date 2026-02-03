@@ -80,15 +80,29 @@ function WidgetEditor() {
     if (!config.name || !agentId) return alert('Name and Agent required');
     try {
       setIsSaving(true);
-      // Sanitize payload for backend compatibility
-      const safePayload = {
-        ...config,
+      // Create whitelist payload - only send known backend fields
+      const safePayload: any = {
+        name: config.name,
         agentId,
         workspaceId: selectedWorkspace!.id,
-        // Map new/advanced types to 'bubble' for backend storage if not supported
-        widgetType: (['searchbar', 'custom-box'].includes(config.widgetType || '') ? 'bubble' : config.widgetType) as any,
-        // Map new/advanced positions to 'bottom-right' for backend storage
-        position: (['top-center', 'bottom-center', 'middle-center'].includes(config.position || '') ? 'bottom-right' : config.position) as any
+        widgetType: (['searchbar', 'custom-box'].includes(config.widgetType || '') ? 'bubble' : config.widgetType),
+        position: (['top-center', 'bottom-center', 'middle-center'].includes(config.position || '') ? 'bottom-right' : config.position),
+        primaryColor: config.primaryColor,
+        bubbleBackgroundColor: config.bubbleBackgroundColor,
+        bubbleTextColor: config.bubbleTextColor,
+        bubbleShadow: config.bubbleShadow,
+        bubbleIcon: config.bubbleIcon,
+        bubbleText: config.bubbleText,
+        bubbleSize: config.bubbleSize === 'custom' ? 'medium' : config.bubbleSize,
+        bubbleShape: config.bubbleShape,
+        chatWidth: config.chatWidth,
+        chatHeight: config.chatHeight,
+        headerTitle: config.headerTitle,
+        headerSubtitle: config.headerSubtitle,
+        greeting: config.greeting,
+        placeholder: config.placeholder,
+        launcherMode: config.launcherMode,
+        launcherStructure: config.launcherStructure, // Backend might expect JSON string or object
       };
 
       if (widgetId) {

@@ -207,7 +207,21 @@ export interface WidgetConfig {
 // --- Helper Components ---
 
 // 1. Structure Item (Sortable)
-function StructureItem({ block, isSelected, onSelect, onDelete }: { block: LauncherBlock, isSelected: boolean, onSelect: () => void, onDelete: () => void }) {
+function StructureItem({
+  block,
+  isSelected,
+  onSelect,
+  onDeleteBlock,
+  selectedBlockId,
+  onSelectBlock
+}: {
+  block: LauncherBlock,
+  isSelected: boolean,
+  onSelect: () => void,
+  onDeleteBlock: (id: string) => void,
+  selectedBlockId: string | null,
+  onSelectBlock: (id: string) => void
+}) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: block.id });
 
   const style = {
@@ -221,7 +235,7 @@ function StructureItem({ block, isSelected, onSelect, onDelete }: { block: Launc
     <div ref={setNodeRef} style={style} className={`mb-1`}>
       <div
         className={`flex items-center gap-2 p-2 rounded-md text-sm border cursor-pointer select-none transition-colors ${isSelected ? 'bg-primary/10 border-primary text-primary font-medium' : 'bg-background border-border hover:bg-muted'}`}
-        onClick={(e) => { e.stopPropagation(); onSelect(); }}
+        onClick={(e) => { e.stopPropagation(); onSelectBlock(block.id); }}
         {...attributes}
         {...listeners}
       >
@@ -243,7 +257,7 @@ function StructureItem({ block, isSelected, onSelect, onDelete }: { block: Launc
         </span>
 
         <button
-          onClick={(e) => { e.stopPropagation(); onDelete(); }}
+          onClick={(e) => { e.stopPropagation(); onDeleteBlock(block.id); }}
           className="text-muted-foreground hover:text-destructive p-1 rounded hover:bg-destructive/10"
         >
           <RemixIcons.RiDeleteBinLine size={14} />
@@ -256,9 +270,11 @@ function StructureItem({ block, isSelected, onSelect, onDelete }: { block: Launc
               <StructureItem
                 key={child.id}
                 block={child}
-                isSelected={isSelected} // Note: This prop drilling is imperfect but functional
-                onSelect={() => onSelect()} // Simplified for MVP - Ideally pass parent select handler
-                onDelete={() => onDelete()}
+                isSelected={selectedBlockId === child.id}
+                onSelect={() => onSelectBlock(child.id)}
+                onDeleteBlock={onDeleteBlock}
+                selectedBlockId={selectedBlockId}
+                onSelectBlock={onSelectBlock}
               />
             ))}
           </SortableContext>
@@ -267,6 +283,7 @@ function StructureItem({ block, isSelected, onSelect, onDelete }: { block: Launc
     </div>
   );
 }
+
 
 // 2. Style Editor Component (Reused)
 function StyleEditor({ style, hoverStyle, onChange, onHoverChange }: {
@@ -657,7 +674,9 @@ export default function AdvancedWidgetEditor({ config, onChange }: { config: Wid
                       block={block}
                       isSelected={selectedBlockId === block.id}
                       onSelect={() => setSelectedBlockId(block.id)}
-                      onDelete={() => deleteBlock(block.id)}
+                      onDeleteBlock={deleteBlock}
+                      selectedBlockId={selectedBlockId}
+                      onSelectBlock={setSelectedBlockId}
                     />
                   ))}
                 </SortableContext>
