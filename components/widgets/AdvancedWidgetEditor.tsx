@@ -134,7 +134,11 @@ export interface WidgetConfig {
   sendButtonHoverIconColor?: string;
 
   // Advanced Styling
-  backgroundGradient?: string;
+  backgroundGradient?: {
+    from: string;
+    to: string;
+    direction?: string;
+  };
   backdropBlur?: number;
   borderWidth?: number;
   shadowIntensity?: 'none' | 'sm' | 'md' | 'lg' | 'xl';
