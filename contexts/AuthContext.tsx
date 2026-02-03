@@ -27,28 +27,56 @@ interface AuthProviderProps {
 
 export function AuthProvider({ children }: AuthProviderProps) {
   // Gebruik Better Auth's ingebouwde session hook als bron van waarheid
-  const { data: sessionData, isPending, error: sessionError } = useBetterAuthSession();
+  const { data: sessionData, isPending, error: sessionError, refetch } = useBetterAuthSession();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [logoutTriggered, setLogoutTriggered] = useState(false);
 
-  // Debug logging
+  // Debug logging (alleen in development)
   useEffect(() => {
-    console.log('[Auth] Session state:', {
-      isPending,
-      hasSessionData: !!sessionData,
-      hasUser: !!sessionData?.user,
-      isLoggingIn,
-      loading,
-      sessionError: sessionError?.message,
-    });
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[Auth] Session state:', {
+        isPending,
+        hasSessionData: !!sessionData,
+        hasUser: !!sessionData?.user,
+        isLoggingIn,
+        loading,
+        sessionError: sessionError?.message,
+      });
+    }
   }, [sessionData, isPending, isLoggingIn, loading, sessionError]);
+
+  // ✅ Session refresh interval - houdt sessie actief
+  useEffect(() => {
+    if (!sessionData?.user) return;
+
+    // Ververs sessie elke 5 minuten om te voorkomen dat deze verloopt
+    const refreshInterval = setInterval(() => {
+      console.log('[Auth] Refreshing session...');
+      refetch?.();
+    }, 5 * 60 * 1000); // 5 minuten
+
+    return () => clearInterval(refreshInterval);
+  }, [sessionData?.user, refetch]);
+
+  // ✅ Ververs sessie wanneer gebruiker terugkeert naar de pagina
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && sessionData?.user) {
+        console.log('[Auth] Tab became visible, refreshing session...');
+        refetch?.();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [sessionData?.user, refetch]);
 
   // Sync user state met Better Auth session
   useEffect(() => {
     // Wacht tot de session check klaar is
     if (isPending) {
-      console.log('[Auth] Session still pending...');
       return;
     }
 
@@ -59,6 +87,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setUser(sessionData.user as any);
         setIsLoggingIn(false);
         setLoading(false);
+        setLogoutTriggered(false);
       }
       // Blijf wachten als we inloggen maar nog geen user hebben
       return;
@@ -66,23 +95,29 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     // Normale sync na page load of refresh
     if (sessionData?.user) {
-      console.log('[Auth] Session user found:', sessionData.user.email);
       setUser(sessionData.user as any);
-    } else {
-      console.log('[Auth] No session user found');
+      setLogoutTriggered(false);
+    } else if (!logoutTriggered) {
+      // ✅ Alleen user op null zetten als we niet midden in een logout zitten
+      // Dit voorkomt dat tijdelijke session errors leiden tot uitloggen
       setUser(null);
     }
     setLoading(false);
-  }, [sessionData, isPending, isLoggingIn]);
+  }, [sessionData, isPending, isLoggingIn, logoutTriggered]);
 
   // Luister naar auth:logout events van de API client
   useEffect(() => {
-    const handleLogout = () => {
-      logout();
+    const handleLogout = async () => {
+      // ✅ Voorkom dubbele logout triggers
+      if (logoutTriggered) return;
+      setLogoutTriggered(true);
+
+      console.log('[Auth] Logout event received');
+      await logout();
     };
     window.addEventListener('auth:logout', handleLogout);
     return () => window.removeEventListener('auth:logout', handleLogout);
-  }, []);
+  }, [logoutTriggered]);
 
   const login = async (email: string, password: string) => {
     try {

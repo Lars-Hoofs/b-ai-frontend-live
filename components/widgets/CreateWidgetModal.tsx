@@ -18,23 +18,25 @@ const DEFAULT_CONFIG: WidgetConfig = {
   name: '',
   widgetType: 'bubble',
   position: 'bottom-right',
-  bubbleIcon: 'RiChat1Line',
+  primaryColor: '#000000',
+  bubbleIcon: 'RiChat1Fill',
   bubbleShape: 'circle',
   bubbleSize: 'medium',
-  bubbleBackgroundColor: '#6366f1',
+  bubbleBackgroundColor: '#000000',
   bubbleTextColor: '#ffffff',
-  headerBackgroundColor: '#6366f1',
-  headerTextColor: '#ffffff',
-  userMessageColor: '#6366f1',
+  headerBackgroundColor: '#ffffff',
+  headerTextColor: '#000000',
+  userMessageColor: '#000000',
+  userMessageTextColor: '#ffffff',
   botMessageColor: '#f3f4f6',
-  botMessageTextColor: '#1f2937',
-  chatWidth: 400,
-  chatHeight: 600,
-  chatBorderRadius: 16,
-  messageBorderRadius: 12,
-  greeting: 'Hoi! Hoe kan ik je helpen?',
-  placeholder: 'Type je bericht...',
-  showBranding: true,
+  botMessageTextColor: '#111827',
+  chatWidth: 380,
+  chatHeight: 650,
+  chatBorderRadius: 24,
+  messageBorderRadius: 16,
+  greeting: "Hey there!\n\nNeed answers or help with your to-do list? I've got you covered!\n\nJust type what you need, and let's dive into making things happen.",
+  placeholder: 'Type here...',
+  showBranding: false,
   zIndex: 999999,
 };
 
@@ -82,7 +84,7 @@ export function CreateWidgetModal({ isOpen, onClose, onSubmit, workspaceId }: Cr
         name: config.name.trim(),
         widgetType: config.widgetType,
         position: config.position,
-        
+
         // Bubble customization
         bubbleIcon: config.bubbleIcon,
         bubbleText: config.bubbleText,
@@ -92,32 +94,32 @@ export function CreateWidgetModal({ isOpen, onClose, onSubmit, workspaceId }: Cr
         bubbleHeight: config.bubbleHeight,
         bubbleBackgroundColor: config.bubbleBackgroundColor,
         bubbleTextColor: config.bubbleTextColor,
-        
+
         // Layout
         offsetX: config.offsetX,
         offsetY: config.offsetY,
-        
+
         // Chat window
         chatWidth: config.chatWidth,
         chatHeight: config.chatHeight,
         chatBorderRadius: config.chatBorderRadius,
-        
+
         // Header
         headerBackgroundColor: config.headerBackgroundColor,
         headerTextColor: config.headerTextColor,
-        
+
         // Messages
         userMessageColor: config.userMessageColor,
         botMessageColor: config.botMessageColor,
         botMessageTextColor: config.botMessageTextColor,
         messageBorderRadius: config.messageBorderRadius,
-        
+
         // Behavior
         greeting: config.greeting?.trim() || undefined,
         placeholder: config.placeholder.trim(),
         autoOpen: config.autoOpen,
         autoOpenDelay: config.autoOpenDelay,
-        
+
         // Advanced
         showBranding: config.showBranding,
         customCss: config.customCss,

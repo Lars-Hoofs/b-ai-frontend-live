@@ -60,6 +60,7 @@ export interface WidgetConfig {
   imageFullHeight?: boolean;
 
   // Colors
+  primaryColor?: string;
   bubbleBackgroundColor: string;
   bubbleTextColor: string;
   bubbleIconColor?: string;

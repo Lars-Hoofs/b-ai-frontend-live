@@ -53,26 +53,41 @@ export function Topbar() {
   // Initialize Socket.io connection
   useEffect(() => {
     if (!user || !selectedWorkspace) return;
-    
-    // Connect to Socket.io
+
+    // Connect to Socket.io met robuuste configuratie
     const socket = io(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000', {
       auth: {
-        token: document.cookie.split('; ').find(row => row.startsWith('better-auth.session_token'))?.split('=')[1]
+        // ✅ Correcte cookie naam: enterprise.session_token (niet better-auth.session_token)
+        token: document.cookie.split('; ').find(row => row.startsWith('enterprise.session_token'))?.split('=')[1]
       },
-      transports: ['websocket', 'polling']
+      transports: ['websocket', 'polling'],
+      // ✅ Verbeterde reconnect configuratie
+      reconnection: true,
+      reconnectionAttempts: 10,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      timeout: 20000,
     });
-    
+
     socketRef.current = socket;
-    
+
     socket.on('connect', () => {
       console.log('Socket.io connected');
-      
+
       // Join workspace room to receive notifications
       if (selectedWorkspace) {
         socket.emit('join:workspace', { workspaceId: selectedWorkspace.id });
       }
     });
-    
+
+    // ✅ Reconnect handler - rejoin workspace na reconnect
+    socket.on('reconnect', () => {
+      console.log('Socket.io reconnected');
+      if (selectedWorkspace) {
+        socket.emit('join:workspace', { workspaceId: selectedWorkspace.id });
+      }
+    });
+
     socket.on('conversation:human-requested', (data) => {
       console.log('Human agent requested:', data);
       // Show browser notification or toast
@@ -82,20 +97,30 @@ export function Topbar() {
           icon: '/icon.png'
         });
       }
-      
+
       // TODO: Update conversation list in sidebar
       // You can use a context or event emitter to notify the conversations component
     });
-    
-    socket.on('disconnect', () => {
-      console.log('Socket.io disconnected');
+
+    socket.on('disconnect', (reason) => {
+      console.log('Socket.io disconnected:', reason);
+      // ✅ Alleen handmatig reconnecten als de server de verbinding heeft verbroken
+      if (reason === 'io server disconnect') {
+        // Server disconnected, probeer te reconnecten
+        socket.connect();
+      }
     });
-    
+
+    // ✅ Error handling
+    socket.on('connect_error', (error) => {
+      console.warn('Socket.io connection error:', error.message);
+    });
+
     return () => {
       socket.disconnect();
     };
   }, [user, selectedWorkspace]);
-  
+
   // Fetch user status on mount
   useEffect(() => {
     const fetchUserStatus = async () => {
@@ -115,7 +140,7 @@ export function Topbar() {
       fetchUserStatus();
     }
   }, [user]);
-  
+
   // Request notification permission on mount
   useEffect(() => {
     if ('Notification' in window && Notification.permission === 'default') {
@@ -204,16 +229,14 @@ export function Topbar() {
                     selectWorkspace(workspace);
                     setTeamDropdownOpen(false);
                   }}
-                  className={`px-3 py-2 cursor-pointer hover:bg-muted transition-colors ${
-                    workspace.id === selectedWorkspace?.id ? 'bg-primary/10' : ''
-                  }`}
+                  className={`px-3 py-2 cursor-pointer hover:bg-muted transition-colors ${workspace.id === selectedWorkspace?.id ? 'bg-primary/10' : ''
+                    }`}
                 >
                   <div className="flex items-center gap-2">
                     <RiTeamLine className="w-4 h-4 text-muted-foreground" />
                     <div className="flex-1 min-w-0">
-                      <div className={`text-sm truncate ${
-                        workspace.id === selectedWorkspace?.id ? 'font-medium text-foreground' : 'text-foreground'
-                      }`}>
+                      <div className={`text-sm truncate ${workspace.id === selectedWorkspace?.id ? 'font-medium text-foreground' : 'text-foreground'
+                        }`}>
                         {workspace.name}
                       </div>
                       {workspace.description && (
@@ -247,87 +270,84 @@ export function Topbar() {
       {/* Right Side: Actions & Profile */}
       <div className="flex items-center gap-3 ml-6">
 
-        </div>
-
-        {/* Profile Dropdown */}
-        <div className="relative" ref={userDropdownRef}>
-          <button
-            onClick={() => setUserDropdownOpen((s) => !s)}
-            className="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-white font-semibold cursor-pointer hover:shadow-lg hover:scale-105 transition-all"
-          >
-            <span className="text-sm">{getUserInitial()}</span>
-          </button>
-
-          {userDropdownOpen && (
-            <div className="absolute right-0 z-20 mt-2 w-56 bg-popover border border-border rounded-md shadow-lg py-1">
-              {/* Status Section */}
-              <div className="px-4 py-3 border-b border-border">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <div className={`w-2 h-2 rounded-full ${
-                      userStatus === 'online' ? 'bg-green-500' : 'bg-gray-400'
-                    }`} />
-                    <span className="text-sm font-medium text-foreground">
-                      {userStatus === 'online' ? 'Online' : 'Offline'}
-                    </span>
-                  </div>
-                  <button
-                    onClick={toggleUserStatus}
-                    disabled={isUpdatingStatus}
-                    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors disabled:opacity-50 ${
-                      userStatus === 'online' ? 'bg-green-500' : 'bg-gray-300'
-                    }`}
-                  >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                        userStatus === 'online' ? 'translate-x-5' : 'translate-x-0.5'
-                      }`}
-                    />
-                  </button>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {userStatus === 'online' 
-                    ? 'U bent beschikbaar voor chats' 
-                    : 'U ontvangt geen nieuwe chats'
-                  }
-                </p>
-              </div>
-              
-              {/* Menu Items */}
-              <button
-                onClick={() => { router.push('/dashboard/settings'); setUserDropdownOpen(false); }}
-                className="w-full flex items-center gap-3 px-4 py-2 text-sm text-foreground hover:bg-muted transition-colors"
-              >
-                <RiSettings3Line size={18} />
-                <span>Instellingen</span>
-              </button>
-              {user?.role === 'admin' && (
-                <button
-                  onClick={() => { router.push('/superadmin'); setUserDropdownOpen(false); }}
-                  className="w-full flex items-center gap-3 px-4 py-2 text-sm text-foreground hover:bg-muted transition-colors"
-                >
-                  <RiShieldUserLine size={18} />
-                  <span>Superadmin Dashboard</span>
-                </button>
-              )}
-              <button
-                onClick={() => { router.push('/dashboard/settings/profile'); setUserDropdownOpen(false); }}
-                className="w-full flex items-center gap-3 px-4 py-2 text-sm text-foreground hover:bg-muted transition-colors"
-              >
-                <RiUserLine size={18} />
-                <span>Profiel</span>
-              </button>
-              <div className="h-px bg-border my-1" />
-              <button
-                onClick={handleLogout}
-                className="w-full flex items-center gap-3 px-4 py-2 text-sm text-destructive hover:bg-muted transition-colors"
-              >
-                <RiLogoutBoxLine size={18} />
-                <span>Uitloggen</span>
-              </button>
-            </div>
-          )}
-        </div>
       </div>
+
+      {/* Profile Dropdown */}
+      <div className="relative" ref={userDropdownRef}>
+        <button
+          onClick={() => setUserDropdownOpen((s) => !s)}
+          className="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-white font-semibold cursor-pointer hover:shadow-lg hover:scale-105 transition-all"
+        >
+          <span className="text-sm">{getUserInitial()}</span>
+        </button>
+
+        {userDropdownOpen && (
+          <div className="absolute right-0 z-20 mt-2 w-56 bg-popover border border-border rounded-md shadow-lg py-1">
+            {/* Status Section */}
+            <div className="px-4 py-3 border-b border-border">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${userStatus === 'online' ? 'bg-green-500' : 'bg-gray-400'
+                    }`} />
+                  <span className="text-sm font-medium text-foreground">
+                    {userStatus === 'online' ? 'Online' : 'Offline'}
+                  </span>
+                </div>
+                <button
+                  onClick={toggleUserStatus}
+                  disabled={isUpdatingStatus}
+                  className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors disabled:opacity-50 ${userStatus === 'online' ? 'bg-green-500' : 'bg-gray-300'
+                    }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${userStatus === 'online' ? 'translate-x-5' : 'translate-x-0.5'
+                      }`}
+                  />
+                </button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {userStatus === 'online'
+                  ? 'U bent beschikbaar voor chats'
+                  : 'U ontvangt geen nieuwe chats'
+                }
+              </p>
+            </div>
+
+            {/* Menu Items */}
+            <button
+              onClick={() => { router.push('/dashboard/settings'); setUserDropdownOpen(false); }}
+              className="w-full flex items-center gap-3 px-4 py-2 text-sm text-foreground hover:bg-muted transition-colors"
+            >
+              <RiSettings3Line size={18} />
+              <span>Instellingen</span>
+            </button>
+            {user?.role === 'admin' && (
+              <button
+                onClick={() => { router.push('/superadmin'); setUserDropdownOpen(false); }}
+                className="w-full flex items-center gap-3 px-4 py-2 text-sm text-foreground hover:bg-muted transition-colors"
+              >
+                <RiShieldUserLine size={18} />
+                <span>Superadmin Dashboard</span>
+              </button>
+            )}
+            <button
+              onClick={() => { router.push('/dashboard/settings/profile'); setUserDropdownOpen(false); }}
+              className="w-full flex items-center gap-3 px-4 py-2 text-sm text-foreground hover:bg-muted transition-colors"
+            >
+              <RiUserLine size={18} />
+              <span>Profiel</span>
+            </button>
+            <div className="h-px bg-border my-1" />
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center gap-3 px-4 py-2 text-sm text-destructive hover:bg-muted transition-colors"
+            >
+              <RiLogoutBoxLine size={18} />
+              <span>Uitloggen</span>
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }

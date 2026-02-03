@@ -289,12 +289,10 @@ export function InteractiveChatPreview({ config }: InteractiveChatPreviewProps) 
                   style={{
                     ...getChatWindowSize(),
                     position: 'absolute',
-                    // Voor full-height: neem volledige hoogte van container, anders normal offset
                     ...(config.layoutMode === 'full-height'
                       ? { top: 0, bottom: 0 }
-                      : { bottom: '80px' }
+                      : { bottom: '100px' }
                     ),
-                    // Voor full-width: neem volledige breedte
                     ...(config.layoutMode === 'full-width'
                       ? { left: 0, right: 0 }
                       : config.position.includes('left')
@@ -302,12 +300,12 @@ export function InteractiveChatPreview({ config }: InteractiveChatPreviewProps) 
                         : { right: 0 }
                     ),
                     backgroundColor: config.glassEffect
-                      ? (config.theme === 'dark' ? 'rgba(20, 20, 20, 0.85)' : 'rgba(255, 255, 255, 0.85)')
-                      : '#ffffff',
-                    backdropFilter: config.glassEffect ? `blur(${config.backdropBlur || 12}px)` : 'none',
-                    border: config.glassEffect ? '1px solid rgba(255,255,255,0.2)' : 'none',
-                    borderRadius: `${config.chatBorderRadius}px`,
-                    boxShadow: config.shadowIntensity === 'none' ? 'none' : '0 20px 60px rgba(0, 0, 0, 0.2)',
+                      ? (config.theme === 'dark' ? 'rgba(30, 30, 30, 0.85)' : 'rgba(255, 255, 255, 0.85)')
+                      : (config.chatBackgroundColor || '#ffffff'),
+                    backdropFilter: config.glassEffect ? `blur(${config.backdropBlur || 20}px)` : 'none',
+                    border: config.glassEffect ? '1px solid rgba(255,255,255,0.4)' : '1px solid rgba(0,0,0,0.06)',
+                    borderRadius: `${config.chatBorderRadius || 24}px`,
+                    boxShadow: config.shadowIntensity === 'none' ? 'none' : '0 24px 60px -12px rgba(0,0,0,0.14), 0 12px 24px -4px rgba(0,0,0,0.06)',
                     display: 'flex',
                     flexDirection: 'column',
                     overflow: 'hidden',
@@ -316,26 +314,27 @@ export function InteractiveChatPreview({ config }: InteractiveChatPreviewProps) 
                   {/* Chat Header */}
                   <div
                     style={{
-                      backgroundColor: config.glassEffect ? 'transparent' : config.headerBackgroundColor,
+                      backgroundColor: config.glassEffect ? 'transparent' : (config.headerBackgroundColor || '#ffffff'),
                       color: config.headerTextColor,
-                      padding: '16px',
+                      padding: '20px 24px',
                       display: 'flex',
                       justifyContent: 'space-between',
                       alignItems: 'center',
                     }}
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-4">
                       {config.showAgentAvatar !== false && (
                         <div
                           style={{
-                            width: '36px',
-                            height: '36px',
-                            borderRadius: '50%',
-                            backgroundColor: config.avatarBackgroundColor || 'rgba(255,255,255,0.15)',
+                            width: '48px',
+                            height: '48px',
+                            borderRadius: '16px',
+                            backgroundColor: config.avatarBackgroundColor || 'transparent',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
                             overflow: 'hidden',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
                           }}
                         >
                           {config.headerAvatarUrl ? (
@@ -345,18 +344,22 @@ export function InteractiveChatPreview({ config }: InteractiveChatPreviewProps) 
                               style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                             />
                           ) : (
-                            <span style={{ fontSize: '18px' }}>{config.headerAvatarEmoji || '👤'}</span>
+                            config.headerAvatarEmoji ? (
+                              <span style={{ fontSize: '24px' }}>{config.headerAvatarEmoji}</span>
+                            ) : (
+                              <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%)' }}></div>
+                            )
                           )}
                         </div>
                       )}
                       <div>
-                        <span className="font-semibold">{config.headerTitle || 'Chat Support'}</span>
+                        {config.headerTitle && <div className="font-bold text-[18px] leading-tight tracking-tight">{config.headerTitle}</div>}
                         {config.headerSubtitle && (
-                          <div style={{ fontSize: '11px', opacity: 0.8 }}>{config.headerSubtitle}</div>
+                          <div style={{ fontSize: '13px', opacity: 0.6, marginTop: '2px' }}>{config.headerSubtitle}</div>
                         )}
-                        {config.showOnlineStatus !== false && (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '10px', opacity: 0.9, marginTop: '2px' }}>
-                            <span style={{ width: '6px', height: '6px', background: config.onlineStatusColor || '#22c55e', borderRadius: '50%' }}></span>
+                        {config.showOnlineStatus && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', opacity: 0.8, marginTop: '4px' }}>
+                            <span style={{ width: '8px', height: '8px', background: config.onlineStatusColor || '#10b981', borderRadius: '50%', border: '1.5px solid #fff' }}></span>
                             Online
                           </div>
                         )}
@@ -367,9 +370,28 @@ export function InteractiveChatPreview({ config }: InteractiveChatPreviewProps) 
                         e.stopPropagation();
                         setShowChat(false);
                       }}
-                      className="hover:opacity-80 transition-opacity"
+                      style={{
+                        color: config.headerCloseIconColor || (config.headerBackgroundColor === '#ffffff' ? '#000000' : config.headerTextColor),
+                        backgroundColor: config.headerCloseIconBackgroundColor || 'transparent',
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        border: 'none',
+                        cursor: 'pointer'
+                      }}
+                      className="hover:bg-black/5 hover:scale-110 transition-all duration-200"
                     >
-                      <RiCloseLine size={20} />
+                      {config.headerCloseIcon && (RemixIcons as any)[config.headerCloseIcon] ? (
+                        (() => {
+                          const Icon = (RemixIcons as any)[config.headerCloseIcon];
+                          return <Icon size={24} />;
+                        })()
+                      ) : (
+                        <RiCloseLine size={24} />
+                      )}
                     </button>
                   </div>
 
@@ -377,12 +399,12 @@ export function InteractiveChatPreview({ config }: InteractiveChatPreviewProps) 
                   <div
                     style={{
                       flex: 1,
-                      padding: '16px',
+                      padding: '24px',
                       overflowY: 'auto',
                       display: 'flex',
                       flexDirection: 'column',
-                      gap: '12px',
-                      backgroundColor: config.glassEffect ? 'transparent' : (config.chatBackgroundColor || '#f9fafb'),
+                      gap: '24px',
+                      backgroundColor: config.glassEffect ? 'transparent' : (config.chatBackgroundColor || '#ffffff'),
                     }}
                   >
                     {messages.map((msg, idx) => (
@@ -398,25 +420,33 @@ export function InteractiveChatPreview({ config }: InteractiveChatPreviewProps) 
                       >
                         <div
                           style={{
-                            maxWidth: '80%',
-                            padding: '10px 14px',
-                            borderRadius: `${config.messageBorderRadius}px`,
+                            maxWidth: '85%',
+                            padding: '14px 18px',
+                            borderRadius: `${config.messageBorderRadius || 18}px`,
                             backgroundColor: msg.isUser ? config.userMessageColor : config.botMessageColor,
                             color: msg.isUser ? (config.userMessageTextColor || '#ffffff') : (config.botMessageTextColor || '#1f2937'),
-                            fontSize: '14px',
-                            lineHeight: 1.5,
+                            fontSize: '15px',
+                            lineHeight: 1.6,
+                            boxShadow: (msg.isUser && (config.userMessageColor === '#ffffff' || config.userMessageColor === '#fff'))
+                              ? '0 2px 8px rgba(0,0,0,0.04)'
+                              : 'none',
+                            border: (msg.isUser && (config.userMessageColor === '#ffffff' || config.userMessageColor === '#fff'))
+                              ? '1px solid rgba(0,0,0,0.04)'
+                              : 'none'
                           }}
                         >
-                          {msg.text}
+                          {msg.text.split('\n').map((line, i) => (
+                            <div key={i}>{line || <br />}</div>
+                          ))}
 
                           {/* Sources Preview */}
                           {!msg.isUser && msg.sources && config.showSources !== false && (
                             <div style={{
-                              marginTop: '8px',
-                              paddingTop: '8px',
+                              marginTop: '12px',
+                              paddingTop: '10px',
                               borderTop: '1px solid rgba(0,0,0,0.05)',
                               display: 'flex',
-                              gap: '6px',
+                              gap: '8px',
                               flexWrap: 'wrap',
                               alignItems: 'center'
                             }}>
@@ -438,7 +468,7 @@ export function InteractiveChatPreview({ config }: InteractiveChatPreviewProps) 
                                     cursor: 'pointer',
                                     transition: 'transform 0.2s'
                                   }}
-                                  onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
+                                  onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.15)'}
                                   onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
                                 >
                                   <img
@@ -458,42 +488,78 @@ export function InteractiveChatPreview({ config }: InteractiveChatPreviewProps) 
                   {/* Input Area */}
                   <div
                     style={{
-                      padding: '16px',
-                      borderTop: `1px solid ${config.glassEffect ? 'rgba(255,255,255,0.2)' : (config.inputAreaBorderColor || '#e5e7eb')}`,
+                      padding: '20px 24px',
+                      borderTop: `1px solid ${config.glassEffect ? 'rgba(255,255,255,0.2)' : (config.inputAreaBorderColor || 'transparent')}`,
                       backgroundColor: config.glassEffect
-                        ? (config.theme === 'dark' ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.4)')
+                        ? (config.theme === 'dark' ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.6)')
                         : (config.inputAreaBackgroundColor || '#ffffff'),
                     }}
                   >
-                    <div className="flex gap-2">
+                    <div
+                      style={{
+                        display: 'flex',
+                        gap: '12px',
+                        alignItems: 'center',
+                        backgroundColor: config.inputBackgroundColor || '#f3f4f6',
+                        borderRadius: '32px',
+                        padding: '6px 6px 6px 20px',
+                        border: `1px solid ${config.inputBorderColor || 'transparent'}`,
+                        boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
+                        transition: 'all 0.2s'
+                      }}
+                      className="group focus-within:ring-2 focus-within:ring-primary/10 focus-within:bg-white focus-within:shadow-md"
+                    >
                       <input
                         type="text"
                         value={inputValue}
                         onChange={(e) => setInputValue(e.target.value)}
                         onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
                         placeholder={config.placeholder}
-                        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+                        style={{
+                          flex: 1,
+                          border: 'none',
+                          fontSize: '15px',
+                          outline: 'none',
+                          background: 'transparent',
+                          color: config.inputTextColor || '#1f2937',
+                          padding: '10px 0'
+                        }}
                       />
                       <button
                         onClick={sendMessage}
                         style={{
-                          backgroundColor: config.userMessageColor,
-                          color: '#ffffff',
+                          backgroundColor: config.sendButtonBackgroundColor || 'transparent',
+                          color: config.sendButtonIconColor || (config.primaryColor || '#000000'),
+                          width: '42px',
+                          height: '42px',
+                          borderRadius: '50%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                          transition: 'all 0.2s'
                         }}
-                        className="px-4 py-2 rounded-lg hover:opacity-90 transition-opacity"
+                        className="hover:scale-105 active:scale-95"
                       >
-                        <RiSendPlaneFill size={18} />
+                        {config.sendButtonIcon && (RemixIcons as any)[config.sendButtonIcon] ? (
+                          (() => {
+                            const SendIcon = (RemixIcons as any)[config.sendButtonIcon];
+                            return <SendIcon size={24} />;
+                          })()
+                        ) : (
+                          <RiSendPlaneFill size={20} />
+                        )}
                       </button>
                     </div>
                     {config.showBranding && (
-                      <div className="p-2 text-center border-t border-border bg-muted/30">
+                      <div className="pt-3 pb-1 text-center">
                         <a
                           href={config.brandingUrl || "https://bonsaimedia.nl"}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+                          className="text-[10px] text-gray-300 hover:text-gray-500 transition-colors"
                         >
-                          {config.brandingText || "Powered by BonsaiMedia.nl"}
+                          {config.brandingText || "Powered by Bonsai"}
                         </a>
                       </div>
                     )}
