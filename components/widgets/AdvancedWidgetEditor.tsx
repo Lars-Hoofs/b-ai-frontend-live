@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { nanoid } from 'nanoid';
 import { LAUNCHER_TEMPLATES } from './launcherTemplates';
+import { DEFAULT_CHAT_STRUCTURE, CHAT_TEMPLATES } from './chatTemplates';
 import { InteractiveChatPreview } from './InteractiveChatPreview';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as RemixIcons from 'react-icons/ri';
@@ -40,6 +41,28 @@ export interface LauncherBlock {
 
   // Responsiveness
   mobileHidden?: boolean; // Hide on mobile screens
+}
+
+export interface ChatBlock {
+  id: string;
+  type: 'header' | 'messages' | 'input' | 'container' | 'text' | 'button' | 'divider' | 'branding';
+  content?: string; // Text content, button icon, etc.
+  style?: React.CSSProperties;
+  className?: string;
+  children?: ChatBlock[];
+
+  // Specific properties
+  position?: 'top' | 'bottom' | 'left' | 'right';
+  placeholder?: string; // for input blocks
+  icon?: string; // for buttons
+  onClick?: 'send-message' | 'close-chat' | 'custom' | 'open-url';
+  url?: string;
+
+  // Advanced Styles
+  hoverStyle?: React.CSSProperties;
+
+  // Responsiveness
+  mobileHidden?: boolean;
 }
 
 export interface WidgetConfig {
@@ -199,6 +222,10 @@ export interface WidgetConfig {
   // Advanced Launcher Builder
   launcherMode?: 'simple' | 'advanced';
   launcherStructure?: LauncherBlock[];
+
+  // Advanced Chat Builder
+  chatMode?: 'simple' | 'advanced';
+  chatStructure?: ChatBlock[];
 
   // Custom CSS
   customCss?: string;
@@ -523,7 +550,8 @@ function PropertiesPanel({ blockId, config, onUpdateBlock }: { blockId: string |
 
 export default function AdvancedWidgetEditor({ config, onChange }: { config: WidgetConfig, onChange: (c: WidgetConfig) => void }) {
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'launcher' | 'chat'>('launcher');
+  const [activeTab, setActiveTab] = useState<'launcher' | 'chat-builder' | 'chat-settings'>('launcher');
+  const [selectedChatBlockId, setSelectedChatBlockId] = useState<string | null>(null);
 
   // Auto-select first block on load if present
   useEffect(() => {
@@ -646,8 +674,14 @@ export default function AdvancedWidgetEditor({ config, onChange }: { config: Wid
             Launcher
           </button>
           <button
-            onClick={() => setActiveTab('chat')}
-            className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${activeTab === 'chat' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+            onClick={() => setActiveTab('chat-builder')}
+            className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${activeTab === 'chat-builder' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+          >
+            Chat Builder
+          </button>
+          <button
+            onClick={() => setActiveTab('chat-settings')}
+            className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${activeTab === 'chat-settings' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
           >
             Chat Settings
           </button>
@@ -741,6 +775,45 @@ export default function AdvancedWidgetEditor({ config, onChange }: { config: Wid
               config={config}
               onUpdateBlock={updateBlock}
             />
+          </div>
+        </div>
+      ) : activeTab === 'chat-builder' ? (
+        // CHAT BUILDER - Similar structure to launcher
+        <div className="flex-1 p-6">
+          <div className="max-w-4xl mx-auto">
+            <div className="bg-card border border-border rounded-lg p-6 mb-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold">Chat Structure Builder</h3>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground uppercase font-bold">Load Template:</span>
+                  <div className="flex bg-background border border-border rounded-md p-1 gap-1">
+                    {CHAT_TEMPLATES.map(t => (
+                      <button
+                        key={t.id}
+                        className="px-3 py-1 text-xs hover:bg-muted rounded transition-colors"
+                        onClick={() => {
+                          if (confirm('Replace current chat structure with this template?')) {
+                            onChange({ ...config, chatStructure: t.structure, chatMode: 'advanced' });
+                          }
+                        }}
+                        title={t.description}
+                      >
+                        {t.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <div className="text-sm text-muted-foreground mb-4">
+                Build your custom chat layout with drag & drop blocks. Chat Builder coming soon - currently showing default structure!
+              </div>
+              <div className="bg-muted/20 border border-border rounded-lg p-8 text-center">
+                <RemixIcons.RiLayoutMasonryLine size={48} className="mx-auto text-muted-foreground mb-4" />
+                <p className="text-muted-foreground mb-2">Chat Builder UI</p>
+                <p className="text-xs text-muted-foreground">This will be a full drag & drop editor like the Launcher Builder</p>
+                <p className="text-xs text-muted-foreground mt-2">For now, use templates or edit chatStructure directly</p>
+              </div>
+            </div>
           </div>
         </div>
       ) : (
