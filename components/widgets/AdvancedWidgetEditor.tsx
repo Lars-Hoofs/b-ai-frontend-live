@@ -66,7 +66,7 @@ export interface WidgetConfig {
 
   // Animation System
   enableAnimation?: boolean;
-  animationType?: 'fade' | 'slide' | 'scale' | 'bounce';
+  animationType?: 'fade' | 'slide' | 'scale' | 'bounce' | 'flip';
   animationDirection?: 'up' | 'down' | 'left' | 'right';
   animationDuration?: number;
   animationDelay?: number;
