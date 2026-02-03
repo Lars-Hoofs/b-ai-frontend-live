@@ -67,10 +67,10 @@ export interface WidgetConfig {
   // Animation System
   enableAnimation?: boolean;
   animationType?: 'fade' | 'slide' | 'scale' | 'bounce' | 'flip';
-  animationDirection?: 'up' | 'down' | 'left' | 'right';
+  animationDirection?: 'top' | 'bottom' | 'left' | 'right' | 'center';
   animationDuration?: number;
   animationDelay?: number;
-  hoverAnimation?: 'scale' | 'lift' | 'pulse' | 'none';
+  hoverAnimation?: 'scale' | 'lift' | 'pulse' | 'none' | 'grow' | 'rotate';
 
   // Icon/Image Relationship
   imageIconRelation?: 'icon-only' | 'image-only' | 'image-bg-icon-overlay' | 'split';
