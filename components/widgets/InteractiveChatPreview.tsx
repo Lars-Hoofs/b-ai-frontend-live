@@ -171,14 +171,31 @@ export function InteractiveChatPreview({ config, isOpen, setIsOpen, isPreview = 
     switch (block.type) {
       case 'header':
         return (
-          <div key={key} style={{ ...baseStyle, padding: baseStyle.padding || '16px', borderBottom: baseStyle.borderBottom || '1px solid #eee', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div key={key} style={{ ...baseStyle, padding: baseStyle.padding || '20px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: baseStyle.background || config.headerBackgroundColor || '#fff', color: baseStyle.color || config.headerTextColor || '#000' }}>
             {block.children ? block.children.map(renderChatBlock) : (
               <>
-                <div>
-                  <span className="font-bold block">{config.headerTitle || 'Chat'}</span>
-                  <span className="text-xs opacity-70 block">{config.headerSubtitle || 'We are online'}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                  {config.showAgentAvatar !== false && (
+                    <div style={{ width: '48px', height: '48px', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+                      {config.headerAvatarUrl ? (
+                        <img src={config.headerAvatarUrl} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%)' }} />
+                      )}
+                    </div>
+                  )}
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: '18px' }}>{config.headerTitle || 'Chat'}</div>
+                    {config.headerSubtitle && <div style={{ fontSize: '13px', opacity: 0.6, marginTop: '2px' }}>{config.headerSubtitle}</div>}
+                    {config.showOnlineStatus && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', opacity: 0.8, marginTop: '4px' }}>
+                        <span style={{ width: '8px', height: '8px', background: config.onlineStatusColor || '#10b981', borderRadius: '50%', display: 'inline-block', border: '1.5px solid #fff' }} />
+                        Online
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <button onClick={() => setIsOpen(false)} className="opacity-70 hover:opacity-100">✕</button>
+                <button onClick={() => setIsOpen(false)} style={{ background: 'transparent', border: 'none', fontSize: '20px', cursor: 'pointer', padding: 0, width: '40px', height: '40px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
               </>
             )}
           </div>
@@ -186,25 +203,51 @@ export function InteractiveChatPreview({ config, isOpen, setIsOpen, isPreview = 
 
       case 'messages':
         return (
-          <div key={key} style={{ ...baseStyle, flex: baseStyle.flex || 1, overflowY: 'auto', padding: baseStyle.padding || '16px' }}>
-            <div className="flex gap-2">
-              <div className="w-8 h-8 rounded-full bg-gray-200 flex-shrink-0"></div>
-              <div className="bg-white p-3 rounded-2xl rounded-tl-none shadow-sm text-sm text-gray-800 border border-gray-100 max-w-[80%]">
+          <div key={key} style={{ ...baseStyle, flex: baseStyle.flex || 1, overflowY: 'auto', padding: baseStyle.padding || '24px', display: 'flex', flexDirection: 'column', gap: '24px', background: baseStyle.background || config.chatBackgroundColor || '#fff' }}>
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+              <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%)', flexShrink: 0 }} />
+              <div style={{
+                background: config.botMessageColor || '#f3f4f6',
+                color: config.botMessageTextColor || '#111827',
+                padding: '12px 16px',
+                borderRadius: `${config.messageBorderRadius || 16}px`,
+                borderTopLeftRadius: '4px',
+                fontSize: '14px',
+                maxWidth: '80%'
+              }}>
                 {config.greeting || "Hello! How can I help you today?"}
               </div>
             </div>
-            <div className="text-center text-xs text-gray-400 mt-4">Preview Mode</div>
             {block.children && block.children.map(renderChatBlock)}
           </div>
         );
 
       case 'input':
         return (
-          <div key={key} style={{ ...baseStyle, padding: baseStyle.padding || '12px', borderTop: baseStyle.borderTop || '1px solid #eee' }}>
-            <div className="flex gap-2 items-center">
-              <div className="flex-1 bg-gray-100 rounded-full px-4 py-2 text-sm text-gray-500">
-                {block.placeholder || config.placeholder || "Type a message..."}
-              </div>
+          <div key={key} style={{ ...baseStyle, padding: baseStyle.padding || '20px 24px', borderTop: baseStyle.borderTop || '1px solid transparent', background: baseStyle.background || config.inputAreaBackgroundColor || '#fff' }}>
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'center', background: config.inputBackgroundColor || '#f3f4f6', borderRadius: '32px', padding: '6px 6px 6px 20px' }}>
+              <input
+                type="text"
+                placeholder={block.placeholder || config.placeholder || "Type a message..."}
+                disabled
+                style={{ flex: 1, border: 'none', fontSize: '15px', outline: 'none', background: 'transparent', padding: '10px 0' }}
+              />
+              <button style={{
+                background: config.sendButtonBackgroundColor || config.primaryColor || '#000',
+                color: config.sendButtonIconColor || '#fff',
+                border: 'none',
+                padding: 0,
+                width: '42px',
+                height: '42px',
+                borderRadius: '50%',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0
+              }}>
+                <RemixIcons.RiSendPlaneFill size={20} />
+              </button>
               {block.children && block.children.map(renderChatBlock)}
             </div>
           </div>
@@ -284,33 +327,177 @@ export function InteractiveChatPreview({ config, isOpen, setIsOpen, isPreview = 
               // ADVANCED MODE: Render chatStructure
               config.chatStructure.map(block => renderChatBlock(block as ChatBlock))
             ) : (
-              // SIMPLE MODE: Default Layout
+              // SIMPLE MODE: Default Layout - EXACT MATCH with backend widget
               <>
-                {/* Fake Chat Header */}
-                <div style={{ padding: 16, borderBottom: '1px solid #eee', background: config.headerBackgroundColor || '#fff', color: config.headerTextColor || '#000' }}>
-                  <div className="flex justify-between items-center">
+                {/* Header - matches getChatWindowHTML */}
+                <div style={{
+                  background: config.headerBackgroundColor || '#fff',
+                  color: config.headerTextColor || '#000',
+                  padding: '20px 24px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    {/* Avatar */}
+                    {config.showAgentAvatar !== false && (
+                      <div style={{
+                        width: '48px',
+                        height: '48px',
+                        borderRadius: '16px',
+                        background: config.avatarBackgroundColor || 'transparent',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        overflow: 'hidden',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+                      }}>
+                        {config.headerAvatarUrl ? (
+                          <img src={config.headerAvatarUrl} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        ) : config.headerAvatarEmoji ? (
+                          <span style={{ fontSize: '24px' }}>{config.headerAvatarEmoji}</span>
+                        ) : (
+                          <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%)' }} />
+                        )}
+                      </div>
+                    )}
                     <div>
-                      <span className="font-bold block">{config.headerTitle || 'Chat'}</span>
-                      <span className="text-xs opacity-70 block">{config.headerSubtitle || 'We are online'}</span>
+                      {config.headerTitle && (
+                        <div style={{ fontWeight: 700, fontSize: '18px', letterSpacing: '-0.02em' }}>{config.headerTitle}</div>
+                      )}
+                      {config.headerSubtitle && (
+                        <div style={{ fontSize: '13px', opacity: 0.6, marginTop: '2px' }}>{config.headerSubtitle}</div>
+                      )}
+                      {config.showOnlineStatus && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', opacity: 0.8, marginTop: '4px' }}>
+                          <span style={{
+                            width: '8px',
+                            height: '8px',
+                            background: config.onlineStatusColor || '#10b981',
+                            borderRadius: '50%',
+                            display: 'inline-block',
+                            border: '1.5px solid #fff'
+                          }} />
+                          Online
+                        </div>
+                      )}
                     </div>
-                    <button onClick={() => setIsOpen(false)} className="opacity-70 hover:opacity-100">✕</button>
                   </div>
+                  <button
+                    onClick={() => setIsOpen(false)}
+                    style={{
+                      background: config.headerCloseIconBackgroundColor || 'transparent',
+                      border: 'none',
+                      color: config.headerCloseIconColor || (config.headerBackgroundColor === '#ffffff' ? '#000' : config.headerTextColor),
+                      fontSize: '20px',
+                      cursor: 'pointer',
+                      padding: 0,
+                      width: '40px',
+                      height: '40px',
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >✕</button>
                 </div>
-                <div className="flex-1 bg-gray-50 p-4">
-                  <div className="flex gap-2">
-                    <div className="w-8 h-8 rounded-full bg-gray-200 flex-shrink-0"></div>
-                    <div className="bg-white p-3 rounded-2xl rounded-tl-none shadow-sm text-sm text-gray-800 border border-gray-100 max-w-[80%]">
+
+                {/* Messages Area */}
+                <div id="ai-chat-messages" style={{
+                  flex: 1,
+                  overflowY: 'auto',
+                  padding: '24px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '24px',
+                  background: config.chatBackgroundColor || '#fff'
+                }}>
+                  {/* Initial greeting message */}
+                  <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                    <div style={{
+                      width: '32px',
+                      height: '32px',
+                      borderRadius: '50%',
+                      background: 'linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%)',
+                      flexShrink: 0
+                    }} />
+                    <div style={{
+                      background: config.botMessageColor || '#f3f4f6',
+                      color: config.botMessageTextColor || '#111827',
+                      padding: '12px 16px',
+                      borderRadius: `${config.messageBorderRadius || 16}px`,
+                      borderTopLeftRadius: '4px',
+                      fontSize: '14px',
+                      maxWidth: '80%',
+                      boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+                    }}>
                       {config.greeting || "Hello! How can I help you today?"}
                     </div>
                   </div>
-                  <div className="text-center text-xs text-gray-400 mt-8">Preview Mode</div>
                 </div>
-                {/* Input Placeholder */}
-                <div className="p-3 border-t bg-white">
-                  <div className="w-full bg-gray-100 rounded-full px-4 py-2 text-sm text-gray-500">
-                    {config.placeholder || "Type a message..."}
+
+                {/* Input Area - matches backend exactly */}
+                <div style={{
+                  padding: '20px 24px',
+                  borderTop: `1px solid ${config.inputAreaBorderColor || 'transparent'}`,
+                  background: config.inputAreaBackgroundColor || '#fff'
+                }}>
+                  <div style={{
+                    display: 'flex',
+                    gap: '12px',
+                    alignItems: 'center',
+                    background: config.inputBackgroundColor || '#f3f4f6',
+                    borderRadius: '32px',
+                    padding: '6px 6px 6px 20px',
+                    border: `1px solid ${config.inputBorderColor || 'transparent'}`
+                  }}>
+                    <input
+                      type="text"
+                      placeholder={config.placeholder || "Type here..."}
+                      disabled
+                      style={{
+                        flex: 1,
+                        border: 'none',
+                        fontSize: '15px',
+                        outline: 'none',
+                        background: 'transparent',
+                        color: config.inputTextColor || '#1f2937',
+                        padding: '10px 0'
+                      }}
+                    />
+                    <button style={{
+                      background: config.sendButtonBackgroundColor || config.primaryColor || '#000',
+                      color: config.sendButtonIconColor || '#fff',
+                      border: 'none',
+                      padding: 0,
+                      width: '42px',
+                      height: '42px',
+                      borderRadius: '50%',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0
+                    }}>
+                      <RemixIcons.RiSendPlaneFill size={20} />
+                    </button>
                   </div>
                 </div>
+
+                {/* Branding */}
+                {config.showBranding && (
+                  <div style={{
+                    padding: '8px',
+                    textAlign: 'center',
+                    fontSize: '11px',
+                    color: '#d1d5db',
+                    background: config.chatBackgroundColor || '#fff'
+                  }}>
+                    <a href={config.brandingUrl || 'https://bonsaimedia.nl'} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>
+                      {config.brandingText || 'Powered by Bonsai'}
+                    </a>
+                  </div>
+                )}
               </>
             )}
           </motion.div>
