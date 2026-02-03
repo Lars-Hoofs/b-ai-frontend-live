@@ -41,7 +41,7 @@ export interface WidgetConfig {
   widgetType?: 'bubble' | 'full-page' | 'embed';
 
   // Layout
-  position: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left' | 'middle-right' | 'middle-left';
+  position: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left' | 'middle-right' | 'middle-left' | 'top-center' | 'bottom-center' | 'middle-center';
   offsetX?: number;
   offsetY?: number;
   layoutMode?: 'fixed' | 'percentage' | 'full-height' | 'full-width' | 'custom';

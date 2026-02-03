@@ -56,7 +56,21 @@ export function InteractiveChatPreview({ config, isOpen, setIsOpen }: {
       positionStyles.left = offset.x;
       positionStyles.transform = `translateY(-50%) translateY(${offset.y}px)`;
       break;
-    // ... add others as needed
+    case 'top-center':
+      positionStyles.top = offset.y;
+      positionStyles.left = '50%';
+      positionStyles.transform = `translateX(-50%) translateX(${offset.x}px)`;
+      break;
+    case 'bottom-center':
+      positionStyles.bottom = offset.y;
+      positionStyles.left = '50%';
+      positionStyles.transform = `translateX(-50%) translateX(${offset.x}px)`;
+      break;
+    case 'middle-center':
+      positionStyles.top = '50%';
+      positionStyles.left = '50%';
+      positionStyles.transform = `translate(-50%, -50%) translate(${offset.x}px, ${offset.y}px)`;
+      break;
     default:
       positionStyles.bottom = 20;
       positionStyles.right = 20;
@@ -112,7 +126,7 @@ export function InteractiveChatPreview({ config, isOpen, setIsOpen }: {
     // Framer Motion Props
     const motionProps = {
       style: { ...baseStyle, cursor: block.onClick ? 'pointer' : 'default' },
-      whileHover: block.hoverStyle ? block.hoverStyle : { scale: 1.02, opacity: 0.95 }, // Default subtle hover if no specific style
+      whileHover: (block.hoverStyle ? block.hoverStyle : { scale: 1.02, opacity: 0.95 }) as any, // Default subtle hover if no specific style
       whileTap: { scale: 0.95 },
       onClick: handleClick,
       layout: true, // Auto layout animations
