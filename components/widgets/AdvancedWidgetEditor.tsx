@@ -627,21 +627,20 @@ export default function AdvancedWidgetEditor({ config, onChange }: { config: Wid
         </div>
 
         {/* CENTER: Canvas */}
-        <div className="bg-[#f0f0f0] dark:bg-[#111] relative flex items-center justify-center overflow-hidden">
+        <div className="bg-gradient-to-br from-slate-100 to-slate-200 dark:from-zinc-900 dark:to-black relative flex items-center justify-center overflow-hidden">
           {/* Pattern Background */}
-          <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.1]" style={{ backgroundImage: 'radial-gradient(#000 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
+          <div className="absolute inset-0 opacity-[0.05] dark:opacity-[0.1]" style={{ backgroundImage: 'radial-gradient(#999 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
 
-          {/* Preview Area */}
-          <div className="relative z-10 w-full h-full flex items-center justify-center p-8 pointer-events-none">
-            <div className="pointer-events-auto relative">
+          {/* Preview Area - Acts as the 'Viewport' */}
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute inset-0 pointer-events-auto">
               {/* Simplified View for Editor Mode */}
-              <div className="relative cursor-pointer" onClick={() => { /* Could implement click-to-select from preview */ }}>
-                <InteractiveChatPreview
-                  config={config}
-                  isOpen={false}
-                  setIsOpen={() => { }}
-                />
-              </div>
+              <InteractiveChatPreview
+                config={config}
+                isOpen={false}
+                setIsOpen={() => { }}
+                isPreview={true}
+              />
             </div>
           </div>
 

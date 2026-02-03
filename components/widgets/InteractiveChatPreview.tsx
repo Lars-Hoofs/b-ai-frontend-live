@@ -16,15 +16,16 @@ interface LauncherBlock {
   mobileHidden?: boolean;
 }
 
-export function InteractiveChatPreview({ config, isOpen, setIsOpen }: {
+export function InteractiveChatPreview({ config, isOpen, setIsOpen, isPreview = false }: {
   config: WidgetConfig,
   isOpen: boolean,
-  setIsOpen: (v: boolean) => void
+  setIsOpen: (v: boolean) => void,
+  isPreview?: boolean
 }) {
   // Determine position styles
   const positionStyles: React.CSSProperties = {
-    position: 'fixed',
-    zIndex: config.zIndex || 999999,
+    position: isPreview ? 'absolute' : 'fixed',
+    zIndex: isPreview ? 10 : (config.zIndex || 999999),
   };
 
   const offset = { x: config.offsetX || 20, y: config.offsetY || 20 };
