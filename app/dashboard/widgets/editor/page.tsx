@@ -80,12 +80,22 @@ function WidgetEditor() {
     if (!config.name || !agentId) return alert('Name and Agent required');
     try {
       setIsSaving(true);
-      const payload = { ...config, agentId, workspaceId: selectedWorkspace!.id };
+      // Sanitize payload for backend compatibility
+      const safePayload = {
+        ...config,
+        agentId,
+        workspaceId: selectedWorkspace!.id,
+        // Map new/advanced types to 'bubble' for backend storage if not supported
+        widgetType: (['searchbar', 'custom-box'].includes(config.widgetType || '') ? 'bubble' : config.widgetType) as any,
+        // Map new/advanced positions to 'bottom-right' for backend storage
+        position: (['top-center', 'bottom-center', 'middle-center'].includes(config.position || '') ? 'bottom-right' : config.position) as any
+      };
+
       if (widgetId) {
-        await widgetAPI.update(widgetId, payload);
+        await widgetAPI.update(widgetId, safePayload);
         alert('Saved!');
       } else {
-        const res = await widgetAPI.create(payload);
+        const res = await widgetAPI.create(safePayload);
         router.push(`/dashboard/widgets/editor?id=${res.id}`);
       }
     } catch (e: any) {
