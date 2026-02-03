@@ -38,7 +38,7 @@ export interface WidgetConfig {
   workspaceId?: string;
   name: string;
   agentId?: string;
-  widgetType?: 'bubble' | 'full-page' | 'embed';
+  widgetType?: 'bubble' | 'full-page' | 'embed' | 'searchbar' | 'custom-box';
 
   // Layout
   position: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left' | 'middle-right' | 'middle-left' | 'top-center' | 'bottom-center' | 'middle-center';
