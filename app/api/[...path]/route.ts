@@ -94,68 +94,48 @@ async function proxyRequest(request: NextRequest, pathArray: string[]) {
       statusText: response.statusText,
     });
 
-    // Forward all response headers
-    response.headers.forEach((value, key) => {
-      // Skip set-cookie header, we'll handle it separately
-      if (key.toLowerCase() !== 'set-cookie') {
-        nextResponse.headers.set(key, value);
-      }
-    });
-
-    // Handle Set-Cookie headers specially to ensure proper cookie forwarding
-    // Better Auth may set multiple cookies, so we need to get all of them
-    const setCookieHeaders: string[] = [];
-
-    // Fetch API doesn't support multiple headers with the same name well,
-    // so we need to work around this
-    response.headers.forEach((value, key) => {
-      if (key.toLowerCase() === 'set-cookie') {
-        setCookieHeaders.push(value);
-      }
-    });
-
     // Detect if we're in production (HTTPS) or development (HTTP)
     const isProduction = request.url.startsWith('https://');
     console.log('[Proxy] Environment:', isProduction ? 'PRODUCTION' : 'DEVELOPMENT');
 
-    if (setCookieHeaders.length > 0) {
-      setCookieHeaders.forEach(cookie => {
-        console.log('[Proxy] Original Set-Cookie from backend:', cookie);
+    // Forward all response headers EXCEPT Set-Cookie and HSTS (in dev)
+    response.headers.forEach((value, key) => {
+      const lowerKey = key.toLowerCase();
+      if (lowerKey === 'set-cookie') return;
+      if (!isProduction && lowerKey === 'strict-transport-security') return;
+      nextResponse.headers.set(key, value);
+    });
 
+    // Handle Set-Cookie headers specially using getSetCookie() (Node 18+/Next.js)
+    let cookies: string[] = [];
+    if (typeof response.headers.getSetCookie === 'function') {
+      cookies = response.headers.getSetCookie();
+    } else {
+      // Fallback
+      const headerVal = response.headers.get('set-cookie');
+      if (headerVal) cookies = [headerVal];
+    }
+
+    if (cookies.length > 0) {
+      cookies.forEach(cookie => {
         let modifiedCookie = cookie;
-
         if (!isProduction) {
           // DEVELOPMENT: Modify cookies to work with localhost
           modifiedCookie = cookie
             .split(';')
             .map(part => {
               const trimmed = part.trim();
-              // Replace Strict with Lax in dev mode for better compatibility
-              if (trimmed.toLowerCase().startsWith('samesite=')) {
-                return 'SameSite=Lax';
-              }
-              // Remove Secure in development (localhost)
-              if (trimmed.toLowerCase() === 'secure') {
-                return '';
-              }
-              // Remove domain in development (use localhost)
-              if (trimmed.toLowerCase().startsWith('domain=')) {
-                return '';
-              }
+              const lowerPart = trimmed.toLowerCase();
+              if (lowerPart.startsWith('samesite=')) return 'SameSite=Lax';
+              if (lowerPart === 'secure') return '';
+              if (lowerPart.startsWith('domain=')) return '';
               return part;
             })
             .filter(Boolean)
             .join(';');
+          console.log('[Proxy] Modified cookie:', modifiedCookie);
         }
-        // PRODUCTION: Don't modify cookies!
-        // The backend already sets the correct settings:
-        // - domain: .bonsaimedia.nl (works for ai.bonsaimedia.nl and api.bonsaimedia.nl)
-        // - SameSite=Lax (correct for same-site top-level navigation)
-        // - Secure: true (for HTTPS)
-        // Changing SameSite to None would break the cookies!
-
         nextResponse.headers.append('Set-Cookie', modifiedCookie);
-        console.log('[Proxy] Final Set-Cookie:', modifiedCookie);
       });
     }
 
