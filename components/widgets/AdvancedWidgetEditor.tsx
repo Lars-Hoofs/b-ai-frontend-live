@@ -162,6 +162,23 @@ export interface WidgetConfig {
   // AI-Only Mode & Availability
   aiOnlyMode?: boolean;
   aiOnlyMessage?: string;
+
+  // Avatar Gradient & Styling
+  avatarGradient?: {
+    from: string;
+    to: string;
+    direction: string;
+  };
+  avatarSize?: number;
+  avatarBorderColor?: string;
+  avatarBorderWidth?: number;
+
+  // Typography
+  fontFamily?: string;
+  fontSize?: { header?: number; message?: number; input?: number; };
+  fontWeight?: { header?: number; message?: number; input?: number; };
+  lineHeight?: { header?: number; message?: number; input?: number; };
+  letterSpacing?: { header?: number; message?: number; input?: number; };
   workingHours?: any; // Complex object
   holidays?: any; // Complex object
 
