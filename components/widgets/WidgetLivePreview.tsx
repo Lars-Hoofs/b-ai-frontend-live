@@ -46,7 +46,7 @@ export function WidgetLivePreview({ config }: WidgetLivePreviewProps) {
   // Get bubble styles
   const getBubbleStyles = (): React.CSSProperties => {
     let size = { width: 64, height: 64 };
-    
+
     if (config.bubbleSize === 'small') size = { width: 48, height: 48 };
     else if (config.bubbleSize === 'large') size = { width: 80, height: 80 };
     else if (config.bubbleSize === 'custom' && config.bubbleWidth && config.bubbleHeight) {
@@ -166,10 +166,10 @@ export function WidgetLivePreview({ config }: WidgetLivePreviewProps) {
         </div>
 
         {/* Preview Area */}
-        <div 
+        <div
           ref={containerRef}
           className="relative bg-gradient-to-br from-purple-50 to-blue-50 dark:from-gray-900 dark:to-gray-800"
-          style={{ 
+          style={{
             height: '500px',
             backgroundImage: 'radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.1), transparent 50%), radial-gradient(circle at 80% 80%, rgba(59, 130, 246, 0.1), transparent 50%)',
           }}
@@ -196,13 +196,13 @@ export function WidgetLivePreview({ config }: WidgetLivePreviewProps) {
             <div>
               <span className="text-muted-foreground">Type:</span>
               <span className="ml-2 font-medium text-foreground capitalize">
-                {config.widgetType.replace('-', ' ')}
+                {(config.widgetType || 'bubble').replace('-', ' ')}
               </span>
             </div>
             <div>
               <span className="text-muted-foreground">Positie:</span>
               <span className="ml-2 font-medium text-foreground">
-                {config.position.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
+                {(config.position || 'bottom-right').split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
               </span>
             </div>
             <div>
