@@ -51,25 +51,82 @@ export interface InviteMemberInput {
 
 const API_BASE = '/api';
 
+// Track retry attempts per endpoint to prevent infinite loops
+const retryAttempts = new Map<string, number>();
+const MAX_RETRY_ATTEMPTS = 2;
+
 async function fetchAPI<T>(
   endpoint: string,
-  options?: RequestInit
+  options?: RequestInit & { skipRetryOn401?: boolean; suppressErrorLog?: boolean }
 ): Promise<T> {
-  const response = await fetch(`${API_BASE}${endpoint}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options?.headers,
-    },
-    credentials: 'include',
-  });
+  const { skipRetryOn401, suppressErrorLog, ...fetchOptions } = options || {};
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Unknown error' }));
-    throw new Error(error.error || `API Error: ${response.status}`);
+  const url = `${API_BASE}${endpoint}`;
+
+  try {
+    const response = await fetch(url, {
+      ...fetchOptions,
+      headers: {
+        'Content-Type': 'application/json',
+        ...fetchOptions.headers,
+      },
+      credentials: 'include',
+    });
+
+    // Handle 401 Unauthorized with retry logic
+    if (response.status === 401) {
+      const currentAttempts = retryAttempts.get(endpoint) || 0;
+
+      if (skipRetryOn401) {
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('auth:logout'));
+        }
+        throw new Error('Unauthorized');
+      }
+
+      if (currentAttempts < MAX_RETRY_ATTEMPTS) {
+        retryAttempts.set(endpoint, currentAttempts + 1);
+
+        // Exponential backoff
+        const delay = 500 * Math.pow(2, currentAttempts);
+        console.log(`[API] 401 on ${endpoint}, retrying in ${delay}ms`);
+
+        await new Promise(resolve => setTimeout(resolve, delay));
+        return fetchAPI<T>(endpoint, options);
+      }
+
+      retryAttempts.delete(endpoint);
+      console.log(`[API] 401 on ${endpoint} after max retries, triggering logout`);
+
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('auth:logout'));
+      }
+      throw new Error('Session expired');
+    }
+
+    retryAttempts.delete(endpoint);
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+
+      if (!suppressErrorLog) {
+        console.error('API Error:', {
+          status: response.status,
+          url,
+          error: errorData
+        });
+      }
+
+      throw new Error(errorData.error || errorData.message || `API Error: ${response.status}`);
+    }
+
+    return response.json();
+  } catch (error: any) {
+    if (!suppressErrorLog) {
+      console.error('Fetch error:', error);
+    }
+    throw error;
   }
-
-  return response.json();
 }
 
 // Get all workspaces for current user
