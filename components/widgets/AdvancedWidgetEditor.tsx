@@ -12,6 +12,15 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, us
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
+// --- Helpers ---
+const ensureHex = (color: string) => {
+  if (!color) return undefined;
+  if (color.length === 4 && color.startsWith('#')) {
+    return '#' + color[1] + color[1] + color[2] + color[2] + color[3] + color[3];
+  }
+  return color;
+};
+
 // --- Interfaces ---
 
 export interface LauncherBlock {
@@ -242,15 +251,17 @@ function StructureItem({ block, isSelected, onSelect, onDelete }: { block: Launc
       </div>
       {block.children && (
         <div className="ml-4 pl-2 border-l border-border/50 mt-1">
-          {block.children.map(child => (
-            <StructureItem
-              key={child.id}
-              block={child}
-              isSelected={false} // Nested selection logic needs separate handling
-              onSelect={() => onSelect()} // Simplified for MVP
-              onDelete={() => onDelete()}
-            />
-          ))}
+          <SortableContext items={block.children.map(b => b.id)} strategy={verticalListSortingStrategy}>
+            {block.children.map(child => (
+              <StructureItem
+                key={child.id}
+                block={child}
+                isSelected={isSelected} // Note: This prop drilling is imperfect but functional
+                onSelect={() => onSelect()} // Simplified for MVP - Ideally pass parent select handler
+                onDelete={() => onDelete()}
+              />
+            ))}
+          </SortableContext>
         </div>
       )}
     </div>
@@ -270,8 +281,13 @@ function StyleEditor({ style, hoverStyle, onChange, onHoverChange }: {
   const updateFn = mode === 'normal' ? onChange : (onHoverChange || (() => { }));
 
   const handleChange = (key: keyof React.CSSProperties, value: any) => {
-    const newStyle = { ...currentStyle, [key]: value };
-    if (value === '' || value === null || value === undefined) delete (newStyle as any)[key];
+    let finalValue = value;
+    // Auto-fix colors
+    if ((key.toLowerCase().includes('color') || key.toLowerCase().includes('background')) && typeof value === 'string' && value.startsWith('#')) {
+      finalValue = ensureHex(value);
+    }
+    const newStyle = { ...currentStyle, [key]: finalValue };
+    if (finalValue === '' || finalValue === null || finalValue === undefined) delete (newStyle as any)[key];
     updateFn(newStyle);
   };
 
@@ -502,16 +518,41 @@ export default function AdvancedWidgetEditor({ config, onChange }: { config: Wid
     onChange({ ...config, launcherStructure: newStructure });
   };
 
+  // Recursive finder
+  const findContainer = (id: string, items: LauncherBlock[]): LauncherBlock[] | undefined => {
+    if (items.some(i => i.id === id)) return items;
+    for (const item of items) {
+      if (item.children) {
+        const found = findContainer(id, item.children);
+        if (found) return found;
+      }
+    }
+    return undefined;
+  };
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-    if (over && active.id !== over.id) {
-      // Implementing ROOT LEVEL reorder.
-      const oldIndex = (config.launcherStructure || []).findIndex(b => b.id === active.id);
-      const newIndex = (config.launcherStructure || []).findIndex(b => b.id === over.id);
+    if (!over || active.id === over.id) return;
 
-      if (oldIndex !== -1 && newIndex !== -1) {
-        updateStructure(arrayMove(config.launcherStructure!, oldIndex, newIndex));
-      }
+    const activeContainer = findContainer(active.id as string, config.launcherStructure || []);
+    const overContainer = findContainer(over.id as string, config.launcherStructure || []);
+
+    if (activeContainer && overContainer && activeContainer === overContainer) {
+      const oldIndex = activeContainer.findIndex(b => b.id === active.id);
+      const newIndex = overContainer.findIndex(b => b.id === over.id);
+
+      // Create new structure by deep cloning/updating
+      const newStructure = JSON.parse(JSON.stringify(config.launcherStructure)); // Deep clone necessary for safety
+
+      // We need to apply the move to the CLONED structure.
+      // Re-find containers in the clone
+      const activeContainerClone = findContainer(active.id as string, newStructure)!;
+
+      // Perform move
+      const [movedItem] = activeContainerClone.splice(oldIndex, 1);
+      activeContainerClone.splice(newIndex, 0, movedItem);
+
+      updateStructure(newStructure);
     }
   };
 
@@ -581,7 +622,11 @@ export default function AdvancedWidgetEditor({ config, onChange }: { config: Wid
               <button
                 key={t.id}
                 className="px-3 py-1 text-xs hover:bg-muted rounded transition-colors"
-                onClick={() => updateStructure(t.structure)}
+                onClick={() => {
+                  if (confirm('Are you sure? This will replace your current launcher structure.')) {
+                    updateStructure(t.structure);
+                  }
+                }}
                 title={t.description}
               >
                 {t.name}
