@@ -7,7 +7,7 @@ import { InteractiveChatPreview } from './InteractiveChatPreview';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as RemixIcons from 'react-icons/ri';
 
-// DND Kit Imports (Assuming available, if not falling back to simple logic or user needs install)
+// DND Kit Imports
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -35,14 +35,110 @@ export interface LauncherBlock {
 
 export interface WidgetConfig {
   id?: string;
-  workspaceId: string;
+  workspaceId?: string;
   name: string;
-  primaryColor: string;
+  agentId?: string;
+  widgetType?: 'bubble' | 'full-page' | 'embed';
 
-  // New Layout Fields
-  position?: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left' | 'middle-right' | 'middle-left';
+  // Layout
+  position: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left' | 'middle-right' | 'middle-left';
   offsetX?: number;
   offsetY?: number;
+  layoutMode?: 'fixed' | 'percentage' | 'full-height' | 'full-width' | 'custom';
+  widthPercentage?: number;
+  heightPercentage?: number;
+  maxWidth?: number;
+  maxHeight?: number;
+  minWidth?: number;
+  minHeight?: number;
+  zIndex?: number;
+
+  // Simple Launcher (Legacy/Standard)
+  bubbleIcon?: string;
+  bubbleText?: string;
+  bubbleShape?: 'circle' | 'square' | 'rounded-square';
+  bubbleSize?: 'small' | 'medium' | 'large';
+  bubbleWidth?: number;
+  bubbleHeight?: number;
+  bubbleImageUrl?: string;
+  bubbleImageFit?: 'cover' | 'contain' | 'fill';
+  bubbleShadow?: string;
+
+  // Animation System
+  enableAnimation?: boolean;
+  animationType?: 'fade' | 'slide' | 'scale' | 'bounce';
+  animationDirection?: 'up' | 'down' | 'left' | 'right';
+  animationDuration?: number;
+  animationDelay?: number;
+  hoverAnimation?: 'scale' | 'lift' | 'pulse' | 'none';
+
+  // Icon/Image Relationship
+  imageIconRelation?: 'icon-only' | 'image-only' | 'image-bg-icon-overlay' | 'split';
+  imagePosition?: 'left' | 'right' | 'top' | 'bottom' | 'background';
+  imageFullHeight?: boolean;
+
+  // Colors
+  primaryColor?: string; // Sometimes used as fallback
+  bubbleBackgroundColor?: string;
+  bubbleTextColor?: string;
+  bubbleIconColor?: string;
+  headerBackgroundColor?: string;
+  headerTextColor?: string;
+  userMessageColor?: string;
+  userMessageTextColor?: string;
+  botMessageColor?: string;
+  botMessageTextColor?: string;
+  borderColor?: string;
+
+  // Bubble Hover
+  bubbleHoverBackgroundColor?: string;
+  bubbleHoverTextColor?: string;
+  bubbleHoverIconColor?: string;
+  bubbleHoverScale?: number;
+
+  // Header Close Button
+  headerCloseIcon?: string;
+  headerCloseIconColor?: string;
+  headerCloseIconHoverColor?: string;
+  headerCloseIconBackgroundColor?: string;
+  headerCloseIconHoverBackgroundColor?: string;
+  onlineStatusColor?: string;
+  avatarBackgroundColor?: string;
+
+  // Header Avatar
+  showAgentAvatar?: boolean;
+  showOnlineStatus?: boolean;
+  headerAvatarUrl?: string;
+  headerAvatarEmoji?: string;
+  headerTitle?: string;
+  headerSubtitle?: string;
+
+  // Chat Area
+  chatBackgroundColor?: string;
+
+  // Input Styling
+  inputBorderColor?: string;
+  inputFocusBorderColor?: string;
+  inputBackgroundColor?: string;
+  inputTextColor?: string;
+  inputPlaceholderColor?: string;
+  inputAreaBackgroundColor?: string;
+  inputAreaBorderColor?: string;
+  typingIndicatorColor?: string;
+
+  // Send Button
+  sendButtonIcon?: string;
+  sendButtonBackgroundColor?: string;
+  sendButtonIconColor?: string;
+  sendButtonHoverBackgroundColor?: string;
+  sendButtonHoverIconColor?: string;
+
+  // Advanced Styling
+  backgroundGradient?: string;
+  backdropBlur?: number;
+  borderWidth?: number;
+  shadowIntensity?: number;
+  glassEffect?: boolean;
 
   // Chat Window Customization
   greeting?: string;
@@ -50,25 +146,32 @@ export interface WidgetConfig {
   chatWidth?: number;
   chatHeight?: number;
   chatBorderRadius?: number;
-  headerTitle?: string;
-  headerSubtitle?: string;
-  headerBackgroundColor?: string;
-  headerTextColor?: string;
+  messageBorderRadius?: number;
+  chatAnimation?: string;
+  chatOffsetX?: number;
+  chatOffsetY?: number;
 
-  // Simple Launcher (Legacy/Standard)
-  bubbleSize?: 'small' | 'medium' | 'large';
-  bubbleShape?: 'circle' | 'square' | 'rounded-square';
+  // Behavior
+  autoOpen?: boolean;
+  autoOpenDelay?: number;
 
-  // Theme
-  theme?: 'light' | 'dark' | 'auto';
+  // AI-Only Mode & Availability
+  aiOnlyMode?: boolean;
+  aiOnlyMessage?: string;
+  workingHours?: any; // Complex object
+  holidays?: any; // Complex object
+
+  // Branding
+  showBranding?: boolean;
+  brandingText?: string;
+  brandingUrl?: string;
 
   // Advanced Launcher Builder
   launcherMode?: 'simple' | 'advanced';
   launcherStructure?: LauncherBlock[];
 
-  // Layout
-  layoutMode?: 'fixed' | 'percentage' | 'full-height' | 'full-width' | 'custom';
-  zIndex?: number;
+  // Custom CSS
+  customCss?: string;
 }
 
 // --- Helper Components ---
@@ -92,7 +195,7 @@ function StructureItem({ block, isSelected, onSelect, onDelete }: { block: Launc
         {...attributes}
         {...listeners}
       >
-        {/* Drag Handle (Implicit via listeners on whole row or explicit handle) */}
+        {/* Drag Handle */}
         <span className="text-muted-foreground/50"><RemixIcons.RiDraggable /></span>
 
         {/* Type Icon */}
@@ -116,17 +219,15 @@ function StructureItem({ block, isSelected, onSelect, onDelete }: { block: Launc
           <RemixIcons.RiDeleteBinLine size={14} />
         </button>
       </div>
-      {/* Simple Indentation for children (This simple version flattens children for DnD or just renders them recursively without DnD for children yet, unless we make multiple SortableContexts) */}
-      {/* For this MVP, we only allow sorting ROOT items. Nested sorting is complex properly. */}
       {block.children && (
         <div className="ml-4 pl-2 border-l border-border/50 mt-1">
           {block.children.map(child => (
             <StructureItem
               key={child.id}
               block={child}
-              isSelected={false} // Nested selection logic needs lifting state fully recursive searching
-              onSelect={() => onSelect()} // This would need to pass child ID
-              onDelete={() => onDelete()} // This would need to pass child ID
+              isSelected={false} // Nested selection logic needs separate handling
+              onSelect={() => onSelect()} // Simplified for MVP
+              onDelete={() => onDelete()}
             />
           ))}
         </div>
@@ -366,32 +467,24 @@ function PropertiesPanel({ blockId, config, onUpdateBlock }: { blockId: string |
 
 // --- Main Editor Component ---
 
-export default function AdvancedWidgetEditor({ initialConfig, onSave }: { initialConfig: WidgetConfig, onSave: (c: WidgetConfig) => void }) {
-  const [config, setConfig] = useState<WidgetConfig>({
-    ...initialConfig,
-    launcherMode: initialConfig.launcherMode || 'advanced',
-    launcherStructure: initialConfig.launcherStructure || LAUNCHER_TEMPLATES[0].structure // Default to Pill
-  });
+export default function AdvancedWidgetEditor({ config, onChange }: { config: WidgetConfig, onChange: (c: WidgetConfig) => void }) {
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
 
-  // Auto-select first block on load
+  // Auto-select first block on load if present
   useEffect(() => {
     if (config.launcherStructure && config.launcherStructure.length > 0 && !selectedBlockId) {
       setSelectedBlockId(config.launcherStructure[0].id);
     }
-  }, [config.launcherStructure]); // Run nicely on load
+  }, [config.launcherStructure]);
 
   const updateStructure = (newStructure: LauncherBlock[]) => {
-    const newConfig = { ...config, launcherStructure: newStructure };
-    setConfig(newConfig);
-    onSave(newConfig); // Auto-save for preview updates
+    onChange({ ...config, launcherStructure: newStructure });
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (over && active.id !== over.id) {
-      // Flatten check needed or just assume root level for MVP
-      // For now, implementing ROOT LEVEL reorder.
+      // Implementing ROOT LEVEL reorder.
       const oldIndex = (config.launcherStructure || []).findIndex(b => b.id === active.id);
       const newIndex = (config.launcherStructure || []).findIndex(b => b.id === over.id);
 
@@ -433,10 +526,8 @@ export default function AdvancedWidgetEditor({ initialConfig, onSave }: { initia
     };
 
     if (!parentId) {
-      // Add to root
       updateStructure([...(config.launcherStructure || []), newBlock]);
     } else {
-      // Add to child
       const addRecursive = (blocks: LauncherBlock[]): LauncherBlock[] => {
         return blocks.map(b => {
           if (b.id === parentId) return { ...b, children: [...(b.children || []), newBlock] };
@@ -450,12 +541,12 @@ export default function AdvancedWidgetEditor({ initialConfig, onSave }: { initia
   };
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }), // Drag after 5px move to prevent accidental drags on click
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
   return (
-    <div className="h-[calc(100vh-140px)] flex flex-col bg-background text-foreground overflow-hidden border rounded-xl shadow-sm">
+    <div className="h-full flex flex-col bg-background text-foreground overflow-hidden border rounded-xl shadow-sm">
       {/* Toolbar / Header */}
       <div className="h-12 border-b border-border flex items-center justify-between px-4 bg-muted/20 shrink-0">
         <div className="flex items-center gap-2">
@@ -519,23 +610,22 @@ export default function AdvancedWidgetEditor({ initialConfig, onSave }: { initia
           {/* Pattern Background */}
           <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.1]" style={{ backgroundImage: 'radial-gradient(#000 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
 
-          {/* Mobile/Desktop Frame Emulator */}
+          {/* Preview Area */}
           <div className="relative z-10 w-full h-full flex items-center justify-center p-8 pointer-events-none">
-            {/* We wrap preview in pointer-events-auto so we can interact with it, but the container doesn't block */}
             <div className="pointer-events-auto relative">
-              {/* Phone Frame visual could go here */}
-              <div className="absolute -inset-4 border-2 border-dashed border-primary/20 rounded-xl pointer-events-none opacity-50"></div>
-              <InteractiveChatPreview
-                config={config}
-                isOpen={false}
-                setIsOpen={() => { }}
-              />
+              {/* Simplified View for Editor Mode */}
+              <div className="relative cursor-pointer" onClick={() => { /* Could implement click-to-select from preview */ }}>
+                <InteractiveChatPreview
+                  config={config}
+                  isOpen={false}
+                  setIsOpen={() => { }}
+                />
+              </div>
             </div>
           </div>
 
-          {/* Controls Overlay */}
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-background/80 backdrop-blur border border-border px-3 py-1.5 rounded-full shadow-sm text-xs text-muted-foreground">
-            Preview Mode
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-background/80 backdrop-blur border border-border px-3 py-1.5 rounded-full shadow-sm text-xs text-muted-foreground flex items-center gap-2">
+            <RemixIcons.RiEyeLine size={12} /> Live Preview
           </div>
         </div>
 
