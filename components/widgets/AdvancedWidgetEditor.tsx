@@ -523,6 +523,7 @@ function PropertiesPanel({ blockId, config, onUpdateBlock }: { blockId: string |
 
 export default function AdvancedWidgetEditor({ config, onChange }: { config: WidgetConfig, onChange: (c: WidgetConfig) => void }) {
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'launcher' | 'chat'>('launcher');
 
   // Auto-select first block on load if present
   useEffect(() => {
@@ -587,10 +588,18 @@ export default function AdvancedWidgetEditor({ config, onChange }: { config: Wid
 
   const deleteBlock = (id: string) => {
     const deleteRecursive = (blocks: LauncherBlock[]): LauncherBlock[] => {
-      return blocks.filter(b => b.id !== id).map(b => ({
-        ...b,
-        children: b.children ? deleteRecursive(b.children) : undefined
-      }));
+      // First filter out the block to delete
+      const filtered = blocks.filter(b => b.id !== id);
+
+      // Then recursively process children of remaining blocks
+      return filtered.map(b => {
+        if (!b.children || b.children.length === 0) return b;
+        const newChildren = deleteRecursive(b.children);
+        return {
+          ...b,
+          children: newChildren.length > 0 ? newChildren : undefined
+        };
+      });
     };
     updateStructure(deleteRecursive(config.launcherStructure || []));
     if (selectedBlockId === id) setSelectedBlockId(null);
@@ -626,102 +635,219 @@ export default function AdvancedWidgetEditor({ config, onChange }: { config: Wid
 
   return (
     <div className="h-full flex flex-col bg-background text-foreground overflow-hidden border rounded-xl shadow-sm">
-      {/* Toolbar / Header */}
+      {/* Toolbar / Header with Tabs */}
       <div className="h-12 border-b border-border flex items-center justify-between px-4 bg-muted/20 shrink-0">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold">Launcher Builder</span>
-          <span className="text-xs px-2 py-0.5 bg-primary/10 text-primary rounded-full border border-primary/20">Advanced</span>
+        {/* Tabs */}
+        <div className="flex items-center gap-1 bg-background border border-border rounded-lg p-1">
+          <button
+            onClick={() => setActiveTab('launcher')}
+            className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${activeTab === 'launcher' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+          >
+            Launcher
+          </button>
+          <button
+            onClick={() => setActiveTab('chat')}
+            className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${activeTab === 'chat' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+          >
+            Chat Settings
+          </button>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] text-muted-foreground uppercase font-bold mr-1">Load Template:</span>
-          <div className="flex bg-background border border-border rounded-md p-1">
-            {LAUNCHER_TEMPLATES.map(t => (
-              <button
-                key={t.id}
-                className="px-3 py-1 text-xs hover:bg-muted rounded transition-colors"
-                onClick={() => {
-                  if (confirm('Are you sure? This will replace your current launcher structure.')) {
-                    updateStructure(t.structure);
-                  }
-                }}
-                title={t.description}
-              >
-                {t.name}
-              </button>
-            ))}
+
+        {/* Template Loader (only for launcher tab) */}
+        {activeTab === 'launcher' && (
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-muted-foreground uppercase font-bold mr-1">Load Template:</span>
+            <div className="flex bg-background border border-border rounded-md p-1">
+              {LAUNCHER_TEMPLATES.map(t => (
+                <button
+                  key={t.id}
+                  className="px-3 py-1 text-xs hover:bg-muted rounded transition-colors"
+                  onClick={() => {
+                    if (confirm('Are you sure? This will replace your current launcher structure.')) {
+                      updateStructure(t.structure);
+                    }
+                  }}
+                  title={t.description}
+                >
+                  {t.name}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
-      {/* 3-Column Layout */}
-      <div className="flex-1 grid grid-cols-[280px_1fr_320px] overflow-hidden">
 
-        {/* LEFT: Structure Tree */}
-        <div className="border-r border-border bg-muted/5 flex flex-col min-h-0">
-          <div className="p-3 border-b border-border/50 flex justify-between items-center shrink-0">
-            <h3 className="text-xs font-semibold uppercase text-muted-foreground">Layers</h3>
-            <button onClick={() => addBlock(null)} className="text-xs bg-primary text-primary-foreground p-1.5 rounded hover:bg-primary/90 flex items-center gap-1">
-              <RemixIcons.RiAddLine /> <span className="text-[10px]">Root</span>
-            </button>
-          </div>
-          <div className="flex-1 overflow-y-auto p-2 space-y-1">
-            {config.launcherStructure && (
-              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                <SortableContext items={config.launcherStructure.map(b => b.id)} strategy={verticalListSortingStrategy}>
-                  {config.launcherStructure.map(block => (
-                    <StructureItem
-                      key={block.id}
-                      block={block}
-                      isSelected={selectedBlockId === block.id}
-                      onSelect={() => setSelectedBlockId(block.id)}
-                      onDeleteBlock={deleteBlock}
-                      selectedBlockId={selectedBlockId}
-                      onSelectBlock={setSelectedBlockId}
-                    />
-                  ))}
-                </SortableContext>
-              </DndContext>
-            )}
-            {(!config.launcherStructure || config.launcherStructure.length === 0) && (
-              <div className="text-center text-xs text-muted-foreground py-10 opacity-50">
-                No blocks. Add one or load a template.
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* CENTER: Canvas */}
-        <div className="bg-gradient-to-br from-slate-100 to-slate-200 dark:from-zinc-900 dark:to-black relative flex items-center justify-center overflow-hidden">
-          {/* Pattern Background */}
-          <div className="absolute inset-0 opacity-[0.05] dark:opacity-[0.1]" style={{ backgroundImage: 'radial-gradient(#999 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
-
-          {/* Preview Area - Acts as the 'Viewport' */}
-          <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute inset-0 pointer-events-auto">
-              {/* Simplified View for Editor Mode */}
-              <InteractiveChatPreview
-                config={config}
-                isOpen={false}
-                setIsOpen={() => { }}
-                isPreview={true}
-              />
+      {/* Content - Conditional based on active tab */}
+      {activeTab === 'launcher' ? (
+        // LAUNCHER BUILDER - 3 Column Layout
+        <div className="flex-1 grid grid-cols-[280px_1fr_320px] overflow-hidden">
+          {/* LEFT: Structure Tree */}
+          <div className="border-r border-border bg-muted/5 flex flex-col min-h-0">
+            <div className="p-3 border-b border-border/50 flex justify-between items-center shrink-0">
+              <h3 className="text-xs font-semibold uppercase text-muted-foreground">Layers</h3>
+              <button onClick={() => addBlock(null)} className="text-xs bg-primary text-primary-foreground p-1.5 rounded hover:bg-primary/90 flex items-center gap-1">
+                <RemixIcons.RiAddLine /> <span className="text-[10px]">Root</span>
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-2 space-y-1">
+              {config.launcherStructure && (
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                  <SortableContext items={config.launcherStructure.map(b => b.id)} strategy={verticalListSortingStrategy}>
+                    {config.launcherStructure.map(block => (
+                      <StructureItem
+                        key={block.id}
+                        block={block}
+                        isSelected={selectedBlockId === block.id}
+                        onSelect={() => setSelectedBlockId(block.id)}
+                        onDeleteBlock={deleteBlock}
+                        selectedBlockId={selectedBlockId}
+                        onSelectBlock={setSelectedBlockId}
+                      />
+                    ))}
+                  </SortableContext>
+                </DndContext>
+              )}
+              {(!config.launcherStructure || config.launcherStructure.length === 0) && (
+                <div className="text-center text-xs text-muted-foreground py-10 opacity-50">
+                  No blocks. Add one or load a template.
+                </div>
+              )}
             </div>
           </div>
 
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-background/80 backdrop-blur border border-border px-3 py-1.5 rounded-full shadow-sm text-xs text-muted-foreground flex items-center gap-2">
-            <RemixIcons.RiEyeLine size={12} /> Live Preview
+          {/* CENTER: Canvas */}
+          <div className="bg-gradient-to-br from-slate-100 to-slate-200 dark:from-zinc-900 dark:to-black relative flex items-center justify-center overflow-hidden">
+            <div className="absolute inset-0 opacity-[0.05] dark:opacity-[0.1]" style={{ backgroundImage: 'radial-gradient(#999 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
+            <div className="absolute inset-0 pointer-events-none">
+              <div className="absolute inset-0 pointer-events-auto">
+                <InteractiveChatPreview
+                  config={config}
+                  isOpen={false}
+                  setIsOpen={() => { }}
+                  isPreview={true}
+                />
+              </div>
+            </div>
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-background/80 backdrop-blur border border-border px-3 py-1.5 rounded-full shadow-sm text-xs text-muted-foreground flex items-center gap-2">
+              <RemixIcons.RiEyeLine size={12} /> Live Preview
+            </div>
+          </div>
+
+          {/* RIGHT: Properties */}
+          <div className="border-l border-border bg-background flex flex-col min-h-0">
+            <PropertiesPanel
+              blockId={selectedBlockId}
+              config={config}
+              onUpdateBlock={updateBlock}
+            />
           </div>
         </div>
+      ) : (
+        // CHAT SETTINGS - Full width form
+        <div className="flex-1 overflow-auto p-6">
+          <div className="max-w-4xl mx-auto space-y-6">
+            {/* Header Settings */}
+            <div className="bg-card border border-border rounded-lg p-6">
+              <h3 className="text-lg font-semibold mb-4">Header Settings</h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium block mb-2">Header Title</label>
+                  <input
+                    type="text"
+                    value={config.headerTitle || ''}
+                    onChange={(e) => onChange({ ...config, headerTitle: e.target.value })}
+                    placeholder="Chat Support"
+                    className="w-full px-3 py-2 border border-input rounded-lg bg-background"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium block mb-2">Header Subtitle</label>
+                  <input
+                    type="text"
+                    value={config.headerSubtitle || ''}
+                    onChange={(e) => onChange({ ...config, headerSubtitle: e.target.value })}
+                    placeholder="We're online"
+                    className="w-full px-3 py-2 border border-input rounded-lg bg-background"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium block mb-2">Header Background</label>
+                    <input
+                      type="color"
+                      value={ensureHex(config.headerBackgroundColor || '#ffffff')}
+                      onChange={(e) => onChange({ ...config, headerBackgroundColor: e.target.value })}
+                      className="w-full h-10 border border-input rounded-lg"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium block mb-2">Header Text Color</label>
+                    <input
+                      type="color"
+                      value={ensureHex(config.headerTextColor || '#000000')}
+                      onChange={(e) => onChange({ ...config, headerTextColor: e.target.value })}
+                      className="w-full h-10 border border-input rounded-lg"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
 
-        {/* RIGHT: Properties */}
-        <div className="border-l border-border bg-background flex flex-col min-h-0">
-          <PropertiesPanel
-            blockId={selectedBlockId}
-            config={config}
-            onUpdateBlock={updateBlock}
-          />
+            {/* Message Settings */}
+            <div className="bg-card border border-border rounded-lg p-6">
+              <h3 className="text-lg font-semibold mb-4">Messages</h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium block mb-2">Greeting Message</label>
+                  <textarea
+                    value={config.greeting || ''}
+                    onChange={(e) => onChange({ ...config, greeting: e.target.value })}
+                    placeholder="Hello! How can I help you today?"
+                    rows={3}
+                    className="w-full px-3 py-2 border border-input rounded-lg bg-background"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium block mb-2">Input Placeholder</label>
+                  <input
+                    type="text"
+                    value={config.placeholder || ''}
+                    onChange={(e) => onChange({ ...config, placeholder: e.target.value })}
+                    placeholder="Type your message..."
+                    className="w-full px-3 py-2 border border-input rounded-lg bg-background"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Dimensions */}
+            <div className="bg-card border border-border rounded-lg p-6">
+              <h3 className="text-lg font-semibold mb-4">Chat Window Size</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium block mb-2">Width (px)</label>
+                  <input
+                    type="number"
+                    value={config.chatWidth || 380}
+                    onChange={(e) => onChange({ ...config, chatWidth: parseInt(e.target.value) || 380 })}
+                    className="w-full px-3 py-2 border border-input rounded-lg bg-background"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium block mb-2">Height (px)</label>
+                  <input
+                    type="number"
+                    value={config.chatHeight || 650}
+                    onChange={(e) => onChange({ ...config, chatHeight: parseInt(e.target.value) || 650 })}
+                    className="w-full px-3 py-2 border border-input rounded-lg bg-background"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
