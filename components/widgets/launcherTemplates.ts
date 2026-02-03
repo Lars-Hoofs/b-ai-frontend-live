@@ -1,9 +1,15 @@
 
 import { nanoid } from 'nanoid';
-// We import the type but since we are in a ts file we can't import interfaces easily if they are not exported from a shared file.
-// We will just assume the structure is correct matching `LauncherBlock`.
+import type { LauncherBlock } from './AdvancedWidgetEditor';
 
-export const LAUNCHER_TEMPLATES = [
+interface LauncherTemplate {
+    id: string;
+    name: string;
+    description: string;
+    structure: LauncherBlock[];
+}
+
+export const LAUNCHER_TEMPLATES: LauncherTemplate[] = [
     {
         id: 'pill-chat',
         name: 'Simple Pill',
