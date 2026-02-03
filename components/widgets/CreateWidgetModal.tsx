@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { RiLayoutGridLine } from '@remixicon/react';
 import { agentAPI } from '@/lib/api';
-import { AdvancedWidgetEditor, WidgetConfig } from './AdvancedWidgetEditor';
+import AdvancedWidgetEditor, { WidgetConfig } from './AdvancedWidgetEditor';
 import { WidgetLivePreview } from './WidgetLivePreview';
 
 interface CreateWidgetModalProps {
@@ -116,7 +116,7 @@ export function CreateWidgetModal({ isOpen, onClose, onSubmit, workspaceId }: Cr
 
         // Behavior
         greeting: config.greeting?.trim() || undefined,
-        placeholder: config.placeholder.trim(),
+        placeholder: config.placeholder?.trim() || '',
         autoOpen: config.autoOpen,
         autoOpenDelay: config.autoOpenDelay,
 
