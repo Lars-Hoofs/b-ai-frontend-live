@@ -47,7 +47,7 @@ export interface ChatBlock {
   id: string;
   type: 'header' | 'messages' | 'input' | 'container' | 'text' | 'button' | 'divider' | 'branding';
   content?: string; // Text content, button icon, etc.
-  style?: React.CSSProperties;
+  style?: Record<string, any>; // Allow any CSS properties for flexibility
   className?: string;
   children?: ChatBlock[];
 
@@ -59,7 +59,7 @@ export interface ChatBlock {
   url?: string;
 
   // Advanced Styles
-  hoverStyle?: React.CSSProperties;
+  hoverStyle?: Record<string, any>;
 
   // Responsiveness
   mobileHidden?: boolean;
@@ -860,7 +860,7 @@ export default function AdvancedWidgetEditor({ config, onChange }: { config: Wid
                     className="px-2 py-1 text-[10px] bg-background border border-border hover:bg-muted rounded transition-colors"
                     onClick={() => {
                       if (confirm(`Load "${t.name}" template?`)) {
-                        onChange({ ...config, chatStructure: t.structure, chatMode: 'advanced' });
+                        onChange({ ...config, chatStructure: t.structure as ChatBlock[], chatMode: 'advanced' });
                         if (t.structure.length > 0) setSelectedChatBlockId(t.structure[0].id);
                       }
                     }}
