@@ -448,115 +448,127 @@ function WidgetEditor() {
 
       {/* Content */}
       <div className="flex-1 overflow-hidden flex">
-        {/* Editor Section */}
-        <div className={`overflow-y-auto ${showPreview ? 'flex-1' : 'w-full'} px-6 py-6`}>
-          {/* Widget Name & Agent */}
-          <div className="max-w-4xl mx-auto space-y-6 mb-6">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="widget-name" className="block text-sm font-medium text-foreground mb-2">
-                  Widget Naam <span className="text-destructive">*</span>
-                </label>
-                <input
-                  id="widget-name"
-                  type="text"
-                  value={config.name}
-                  onChange={(e) => setConfig({ ...config, name: e.target.value })}
-                  placeholder="Bijv. Homepage Chat, Support Widget..."
-                  required
-                  maxLength={100}
-                  className="w-full px-4 py-3 bg-background border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-foreground placeholder:text-muted-foreground"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="agent" className="block text-sm font-medium text-foreground mb-2">
-                  Selecteer Agent <span className="text-destructive">*</span>
-                </label>
-                <select
-                  id="agent"
-                  value={agentId}
-                  onChange={(e) => setAgentId(e.target.value)}
-                  disabled={isLoadingAgents}
-                  required
-                  className="w-full px-4 py-3 bg-background border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-foreground disabled:opacity-50"
-                >
-                  <option value="">Selecteer een agent...</option>
-                  {agents.map((agent) => (
-                    <option key={agent.id} value={agent.id}>
-                      {agent.name} ({agent.aiModel})
-                    </option>
-                  ))}
-                </select>
-                {agents.length === 0 && !isLoadingAgents && (
-                  <div className="text-xs text-destructive mt-1">
-                    Geen actieve agents beschikbaar. Maak eerst een agent aan.
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Advanced Editor */}
-          <div className="max-w-4xl mx-auto">
-            <AdvancedWidgetEditor config={config} onChange={setConfig} />
-          </div>
-        </div>
-
-        {/* Preview Section */}
+        {/* Leftekant: Preview Section (Groot, Focus) */}
         {showPreview && (
-          <div className="w-[420px] border-l border-border bg-muted/30 overflow-y-auto flex-shrink-0">
+          <div className="flex-1 bg-muted/10 relative overflow-hidden flex flex-col">
             {/* Preview Mode Switcher */}
-            <div className="sticky top-0 bg-muted/30 backdrop-blur-sm z-10 p-4 border-b border-border">
-              <div className="grid grid-cols-3 gap-2 p-1 bg-background rounded-lg border border-border">
+            <div className="absolute top-4 left-4 z-10 bg-background/80 backdrop-blur-sm p-1.5 rounded-lg border border-border shadow-sm">
+              <div className="flex gap-1">
                 <button
                   onClick={() => setPreviewMode('interactive')}
-                  className={`flex items-center justify-center gap-2 py-2 px-2 rounded-md text-xs font-medium transition-all ${previewMode === 'interactive'
-                      ? 'bg-primary text-primary-foreground shadow-sm'
-                      : 'text-muted-foreground hover:text-foreground'
+                  className={`flex items-center gap-2 py-1.5 px-3 rounded-md text-xs font-medium transition-all ${previewMode === 'interactive'
+                    ? 'bg-primary text-primary-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                     }`}
-                  title="Volledig interactieve chat preview"
+                  title="Interactieve modus"
                 >
-                  <RiChat3Line size={16} />
-                  Chat
+                  <RiChat3Line size={14} />
+                  Interactief
                 </button>
                 <button
                   onClick={() => setPreviewMode('animated')}
-                  className={`flex items-center justify-center gap-2 py-2 px-2 rounded-md text-xs font-medium transition-all ${previewMode === 'animated'
-                      ? 'bg-primary text-primary-foreground shadow-sm'
-                      : 'text-muted-foreground hover:text-foreground'
+                  className={`flex items-center gap-2 py-1.5 px-3 rounded-md text-xs font-medium transition-all ${previewMode === 'animated'
+                    ? 'bg-primary text-primary-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                     }`}
-                  title="Bekijk widget animaties"
+                  title="Animatie check"
                 >
-                  <RiMagicLine size={16} />
+                  <RiMagicLine size={14} />
                   Animaties
                 </button>
                 <button
                   onClick={() => setPreviewMode('static')}
-                  className={`flex items-center justify-center gap-2 py-2 px-2 rounded-md text-xs font-medium transition-all ${previewMode === 'static'
-                      ? 'bg-primary text-primary-foreground shadow-sm'
-                      : 'text-muted-foreground hover:text-foreground'
+                  className={`flex items-center gap-2 py-1.5 px-3 rounded-md text-xs font-medium transition-all ${previewMode === 'static'
+                    ? 'bg-primary text-primary-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                     }`}
-                  title="Statische layout preview"
+                  title="Layout debug"
                 >
-                  <RiLayoutLine size={16} />
+                  <RiLayoutLine size={14} />
                   Layout
                 </button>
               </div>
             </div>
 
-            {/* Preview Content */}
-            <div className="p-6">
-              {previewMode === 'interactive' ? (
-                <InteractiveChatPreview config={config} />
-              ) : previewMode === 'animated' ? (
-                <AnimatedWidgetPreview config={config} />
-              ) : (
-                <WidgetLivePreview config={config} />
-              )}
+            {/* Preview Area - Centered & Scaled if needed */}
+            <div className="flex-1 flex items-center justify-center p-8 overflow-hidden bg-gray-50/50 dark:bg-gray-900/50"
+              style={{
+                backgroundImage: 'radial-gradient(circle at 10% 20%, rgba(0,0,0,0.03) 0%, transparent 20%), radial-gradient(circle at 90% 80%, rgba(0,0,0,0.03) 0%, transparent 20%)'
+              }}>
+
+              <div className="relative w-full h-full max-w-[1400px] border border-border/40 shadow-xl rounded-xl bg-background overflow-hidden">
+                {/* Browser Chrome Mockup for realism */}
+                <div className="bg-muted/50 border-b border-border p-3 flex items-center gap-2">
+                  <div className="flex gap-1.5">
+                    <div className="w-3 h-3 rounded-full bg-red-400/80"></div>
+                    <div className="w-3 h-3 rounded-full bg-yellow-400/80"></div>
+                    <div className="w-3 h-3 rounded-full bg-green-400/80"></div>
+                  </div>
+                  <div className="flex-1 bg-background/50 h-6 rounded-md mx-4"></div>
+                </div>
+
+                <div className="relative w-full h-[calc(100%-48px)] bg-white dark:bg-gray-950">
+                  {previewMode === 'interactive' ? (
+                    <InteractiveChatPreview config={config} />
+                  ) : previewMode === 'animated' ? (
+                    <AnimatedWidgetPreview config={config} />
+                  ) : (
+                    <WidgetLivePreview config={config} />
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         )}
+
+        {/* Rechterkant: Editor Settings (Scrollbaar, Smal) */}
+        <div className="w-[420px] border-l border-border bg-background flex flex-col h-full z-20 shadow-[-4px_0_12px_-4px_rgba(0,0,0,0.05)]">
+          <div className="p-5 border-b border-border bg-muted/5">
+            <h2 className="font-semibold flex items-center gap-2">
+              <RiLayoutLine className="text-primary" size={18} />
+              Widget Configuratie
+            </h2>
+            <p className="text-xs text-muted-foreground mt-1">
+              Pas hier alle eigenschappen van je widget aan.
+            </p>
+          </div>
+
+          <div className="flex-1 overflow-y-auto custom-scrollbar p-5 space-y-6">
+            {/* Basic Fields */}
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+                Basis Informatie
+              </label>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1.5">Naam</label>
+                  <input
+                    type="text"
+                    value={config.name}
+                    onChange={(e) => setConfig({ ...config, name: e.target.value })}
+                    className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm focus:ring-1 focus:ring-primary"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1.5">Agent</label>
+                  <select
+                    value={agentId}
+                    onChange={(e) => setAgentId(e.target.value)}
+                    className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm focus:ring-1 focus:ring-primary"
+                  >
+                    <option value="">Kies een agent...</option>
+                    {agents.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div className="h-px bg-border my-2"></div>
+
+            {/* Advanced Editor Component */}
+            <AdvancedWidgetEditor config={config} onChange={setConfig} />
+          </div>
+        </div>
       </div>
 
       {/* Saving Overlay */}

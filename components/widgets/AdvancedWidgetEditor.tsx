@@ -10,14 +10,38 @@ import {
   RiSettings3Line,
   RiCodeLine,
   RiCheckboxCircleLine,
-  RiFontSize
+  RiFontSize,
+  RiHammerLine
 } from '@remixicon/react';
+
+// Block based launcher structure
+export interface LauncherBlock {
+  id: string;
+  type: 'container' | 'row' | 'column' | 'icon' | 'text' | 'image';
+  content?: string; // Text content, image url, or icon name
+  style?: React.CSSProperties;
+  className?: string; // Tailwind classes
+  children?: LauncherBlock[];
+  // Interaction
+  onClick?: 'open-chat' | 'toggle-chat' | 'open-link' | 'email' | 'phone';
+  linkUrl?: string; // For open-link, email (mailto:), phone (tel:)
+
+  // Advanced Styles
+  hoverStyle?: React.CSSProperties; // Styles to apply on hover
+
+  // Responsiveness
+  mobileHidden?: boolean; // Hide on mobile screens
+}
 
 export interface WidgetConfig {
   // Basic
   name: string;
   theme?: 'light' | 'dark' | 'system';
   widgetType: 'bubble' | 'searchbar' | 'custom-box';
+
+  // Launcher Builder (Advanced)
+  launcherMode?: 'simple' | 'advanced';
+  launcherStructure?: LauncherBlock[];
 
   // Layout
   position: string;
@@ -219,7 +243,7 @@ interface AdvancedWidgetEditorProps {
   onChange: (config: WidgetConfig) => void;
 }
 
-type TabType = 'layout' | 'styling' | 'typography' | 'animations' | 'behavior' | 'advanced';
+type TabType = 'layout' | 'styling' | 'typography' | 'launcher' | 'animations' | 'behavior' | 'advanced';
 
 export function AdvancedWidgetEditor({ config, onChange }: AdvancedWidgetEditorProps) {
   const [activeTab, setActiveTab] = useState<TabType>('layout');
@@ -231,6 +255,7 @@ export function AdvancedWidgetEditor({ config, onChange }: AdvancedWidgetEditorP
   const tabs = [
     { id: 'layout' as TabType, label: 'Layout', icon: RiLayoutLine },
     { id: 'styling' as TabType, label: 'Styling', icon: RiPaletteLine },
+    { id: 'launcher' as TabType, label: 'Launcher', icon: RiHammerLine },
     { id: 'typography' as TabType, label: 'Typografie', icon: RiFontSize },
     { id: 'animations' as TabType, label: 'Animaties', icon: RiCheckboxCircleLine },
     { id: 'behavior' as TabType, label: 'Gedrag', icon: RiSettings3Line },
@@ -271,6 +296,9 @@ export function AdvancedWidgetEditor({ config, onChange }: AdvancedWidgetEditorP
         {activeTab === 'styling' && (
           <StylingTab config={config} updateConfig={updateConfig} />
         )}
+        {activeTab === 'launcher' && (
+          <LauncherTab config={config} updateConfig={updateConfig} />
+        )}
         {activeTab === 'typography' && (
           <TypographyTab config={config} updateConfig={updateConfig} />
         )}
@@ -288,7 +316,295 @@ export function AdvancedWidgetEditor({ config, onChange }: AdvancedWidgetEditorP
   );
 }
 
-// Layout Tab
+// Launcher Build Tab
+function LauncherTab({ config, updateConfig }: { config: WidgetConfig; updateConfig: (u: Partial<WidgetConfig>) => void }) {
+  const [editingBlockId, setEditingBlockId] = useState<string | null>(null);
+
+  const addBlock = (parentId: string | null = null) => {
+    const newBlock: LauncherBlock = {
+      id: Math.random().toString(36).substr(2, 9),
+      type: 'icon',
+      content: 'RiChat1Line',
+      style: {
+        padding: '10px',
+        backgroundColor: config.primaryColor || '#000000',
+        color: '#ffffff',
+        borderRadius: '50%',
+      }
+    };
+
+    if (!parentId) {
+      updateConfig({
+        launcherStructure: [...(config.launcherStructure || []), newBlock]
+      });
+    } else {
+      // Recursive add logic would go here - simplified for root level for now in this iteration
+      // For recursive, we need a deep clone and find function.
+      const addDeep = (blocks: LauncherBlock[]): LauncherBlock[] => {
+        return blocks.map(b => {
+          if (b.id === parentId) {
+            return { ...b, children: [...(b.children || []), newBlock] };
+          }
+          if (b.children) {
+            return { ...b, children: addDeep(b.children) };
+          }
+          return b;
+        });
+      };
+      updateConfig({
+        launcherStructure: addDeep(config.launcherStructure || [])
+      });
+    }
+  };
+
+  const updateBlock = (blockId: string, updates: Partial<LauncherBlock>) => {
+    const updateDeep = (blocks: LauncherBlock[]): LauncherBlock[] => {
+      return blocks.map(b => {
+        if (b.id === blockId) {
+          return { ...b, ...updates };
+        }
+        if (b.children) {
+          return { ...b, children: updateDeep(b.children) };
+        }
+        return b;
+      });
+    };
+    updateConfig({
+      launcherStructure: updateDeep(config.launcherStructure || [])
+    });
+  };
+
+  const deleteBlock = (blockId: string) => {
+    const deleteDeep = (blocks: LauncherBlock[]): LauncherBlock[] => {
+      return blocks.filter(b => b.id !== blockId).map(b => {
+        if (b.children) {
+          return { ...b, children: deleteDeep(b.children) };
+        }
+        return b;
+      });
+    };
+    updateConfig({
+      launcherStructure: deleteDeep(config.launcherStructure || [])
+    });
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex bg-muted/20 p-1 rounded-lg">
+        <button
+          onClick={() => updateConfig({ launcherMode: 'simple' })}
+          className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${config.launcherMode !== 'advanced' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground'
+            }`}
+        >
+          Simple Mode
+        </button>
+        <button
+          onClick={() => updateConfig({ launcherMode: 'advanced' })}
+          className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${config.launcherMode === 'advanced' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground'
+            }`}
+        >
+          Advanced Builder
+        </button>
+      </div>
+
+      {config.launcherMode !== 'advanced' ? (
+        <div className="p-4 bg-blue-50 dark:bg-blue-950/20 text-blue-700 dark:text-blue-300 rounded-lg text-sm">
+          Gebruik de <strong>Styling</strong> tab om de standaard bubble aan te passen.
+          Schakel over naar <strong>Advanced Builder</strong> hierboven om een volledig custom launcher te bouwen met blokken.
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <div className="flex justify-between items-center bg-muted/10 p-2 rounded-lg border border-border/50">
+            <div className="flex gap-2">
+              <h3 className="text-sm font-medium self-center">Structure</h3>
+              <div className="relative group">
+                <button className="text-xs bg-white border border-border hover:bg-muted text-foreground px-2 py-1 rounded shadow-sm flex items-center gap-1">
+                  ✨ Templates
+                </button>
+                <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-border shadow-lg rounded-md overflow-hidden z-10 hidden group-hover:block">
+                  {LAUNCHER_TEMPLATES.map(t => (
+                    <button
+                      key={t.id}
+                      onClick={() => updateConfig({ launcherStructure: t.structure })}
+                      className="block w-full text-left px-3 py-2 text-xs hover:bg-muted border-b border-border/50 last:border-0"
+                    >
+                      <div className="font-semibold">{t.name}</div>
+                      <div className="text-[10px] text-muted-foreground truncate">{t.description}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <button
+              onClick={() => addBlock(null)}
+              className="text-xs flex items-center gap-1 bg-primary text-primary-foreground px-2 py-1 rounded hover:bg-primary/90"
+            >
+              + Add Root
+            </button>
+          </div>
+
+          <div className="space-y-2">
+            {(config.launcherStructure || []).map(block => (
+              <BlockEditor
+                key={block.id}
+                block={block}
+                onUpdate={updateBlock}
+                onDelete={deleteBlock}
+                onAddChild={addBlock}
+              />
+            ))}
+            {(!config.launcherStructure || config.launcherStructure.length === 0) && (
+              <div className="text-center py-8 border-2 border-dashed border-border rounded-lg text-muted-foreground text-sm">
+                Start met bouwen of kies een <span className="font-semibold text-primary">Template ✨</span> hierboven.
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function BlockEditor({ block, onUpdate, onDelete, onAddChild }: {
+  block: LauncherBlock;
+  onUpdate: (id: string, u: Partial<LauncherBlock>) => void;
+  onDelete: (id: string) => void;
+  onAddChild: (parentId: string) => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    <div className="border border-border rounded-lg bg-background overflow-hidden animate-in fade-in slide-in-from-top-1 duration-200">
+      <div className="flex items-center gap-2 p-3 bg-muted/10 border-b border-border/50">
+        <button onClick={() => setExpanded(!expanded)} className="p-1 hover:bg-muted rounded">
+          {expanded ? '▼' : '▶'}
+        </button>
+        <span className="text-xs font-mono bg-muted px-1.5 py-0.5 rounded text-muted-foreground">
+          {block.type}
+        </span>
+        <span className="text-sm font-medium flex-1 truncate">
+          {block.id.substring(0, 4)}...
+        </span>
+        <button onClick={() => onDelete(block.id)} className="text-red-500 hover:text-red-700 p-1">
+          ✕
+        </button>
+      </div>
+
+      {expanded && (
+        <div className="p-3 space-y-3 bg-muted/5">
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="text-[10px] uppercase text-muted-foreground font-semibold">Type</label>
+              <select
+                value={block.type}
+                onChange={(e) => onUpdate(block.id, { type: e.target.value as any })}
+                className="w-full text-xs p-1.5 rounded border border-input mt-1"
+              >
+                <option value="container">Container</option>
+                <option value="row">Row (Flex-Row)</option>
+                <option value="column">Column (Flex-Col)</option>
+                <option value="icon">Icon</option>
+                <option value="text">Text</option>
+                <option value="image">Image</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-[10px] uppercase text-muted-foreground font-semibold">
+                {block.type === 'icon' ? 'Icon Name' : block.type === 'image' ? 'Image URL' : 'Content'}
+              </label>
+              <input
+                type="text"
+                value={block.content || ''}
+                onChange={(e) => onUpdate(block.id, { content: e.target.value })}
+                className="w-full text-xs p-1.5 rounded border border-input mt-1"
+                placeholder={block.type === 'icon' ? 'RiChat1Line' : '...'}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-border/50">
+            <div>
+              <label className="text-[10px] uppercase text-muted-foreground font-semibold">Action</label>
+              <select
+                value={block.onClick || 'toggle-chat'}
+                onChange={(e) => onUpdate(block.id, { onClick: e.target.value as any })}
+                className="w-full text-xs p-1.5 rounded border border-input mt-1"
+              >
+                <option value="toggle-chat">Open/Close Chat</option>
+                <option value="open-chat">Open Chat Only</option>
+                <option value="open-link">Open URL</option>
+                <option value="email">Send Email</option>
+                <option value="phone">Call Phone</option>
+              </select>
+            </div>
+            <div>
+              {block.onClick === 'open-link' || block.onClick === 'email' || block.onClick === 'phone' ? (
+                <>
+                  <label className="text-[10px] uppercase text-muted-foreground font-semibold">
+                    {block.onClick === 'email' ? 'Email Address' : block.onClick === 'phone' ? 'Phone Number' : 'URL'}
+                  </label>
+                  <input
+                    type="text"
+                    value={block.linkUrl || ''}
+                    onChange={(e) => onUpdate(block.id, { linkUrl: e.target.value })}
+                    className="w-full text-xs p-1.5 rounded border border-input mt-1"
+                    placeholder={block.onClick === 'email' ? 'support@example.com' : 'https://...'}
+                  />
+                </>
+              ) : (
+                <div className="flex items-center gap-2 h-full pt-4">
+                  <label className="flex items-center gap-1.5 text-xs">
+                    <input
+                      type="checkbox"
+                      checked={block.mobileHidden || false}
+                      onChange={(e) => onUpdate(block.id, { mobileHidden: e.target.checked })}
+                      className="rounded border-input"
+                    />
+                    Hide on Mobile
+                  </label>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="space-y-4 border border-border rounded-md p-3 bg-background/50">
+            <h4 className="text-[10px] uppercase font-bold text-muted-foreground mb-2">Styling & Effects</h4>
+            <StyleEditor
+              style={block.style || {}}
+              hoverStyle={block.hoverStyle}
+              onChange={(newStyle) => onUpdate(block.id, { style: newStyle })}
+              onHoverChange={(newHoverStyle) => onUpdate(block.id, { hoverStyle: newHoverStyle })}
+            />
+          </div>
+
+          {(block.type === 'container' || block.type === 'row' || block.type === 'column') && (
+            <div className="border-t border-border pt-2 mt-2">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-xs font-semibold">Children</span>
+                <button onClick={() => onAddChild(block.id)} className="text-[10px] bg-primary/10 text-primary px-2 py-1 rounded">
+                  + Add Child
+                </button>
+              </div>
+              <div className="pl-2 border-l-2 border-border/50 space-y-2">
+                {(block.children || []).map(child => (
+                  <BlockEditor
+                    key={child.id}
+                    block={child}
+                    onUpdate={onUpdate}
+                    onDelete={onDelete}
+                    onAddChild={onAddChild}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Layout Tab (Previous, unmodified)
 function LayoutTab({ config, updateConfig }: { config: WidgetConfig; updateConfig: (u: Partial<WidgetConfig>) => void }) {
   return (
     <div className="space-y-6">
@@ -1449,6 +1765,306 @@ function AdvancedTab({ config, updateConfig }: { config: WidgetConfig; updateCon
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+
+function StyleEditor({ style, hoverStyle, onChange, onHoverChange }: {
+  style: React.CSSProperties,
+  hoverStyle?: React.CSSProperties,
+  onChange: (s: React.CSSProperties) => void,
+  onHoverChange?: (s: React.CSSProperties) => void
+}) {
+  const [mode, setMode] = useState<'normal' | 'hover'>('normal');
+
+  const currentStyle = mode === 'normal' ? style : (hoverStyle || {});
+  const updateFn = mode === 'normal' ? onChange : (onHoverChange || (() => { }));
+
+  const handleChange = (key: keyof React.CSSProperties, value: any) => {
+    const newStyle = { ...currentStyle, [key]: value };
+    // Clean up empty values
+    if (value === '' || value === null || value === undefined) {
+      delete (newStyle as any)[key];
+    }
+    updateFn(newStyle);
+  };
+
+  return (
+    <div className="space-y-3">
+      {/* State Tabs */}
+      <div className="flex bg-muted/30 p-0.5 rounded-lg mb-2">
+        <button
+          onClick={() => setMode('normal')}
+          className={`flex-1 text-[10px] py-1 rounded-md font-medium transition-colors ${mode === 'normal' ? 'bg-background shadow text-foreground' : 'text-muted-foreground'}`}
+        >
+          Normal
+        </button>
+        <button
+          onClick={() => setMode('hover')}
+          className={`flex-1 text-[10px] py-1 rounded-md font-medium transition-colors ${mode === 'hover' ? 'bg-background shadow text-foreground' : 'text-muted-foreground'}`}
+        >
+          Hover State
+        </button>
+      </div>
+
+      {/* Layout / Dimensions */}
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <label className="text-[10px] text-muted-foreground block mb-1">Width</label>
+          <input
+            type="text"
+            value={style.width || ''}
+            onChange={(e) => handleChange('width', e.target.value)}
+            placeholder="e.g. 100%, 50px"
+            className="w-full text-xs p-1 rounded border border-input bg-background"
+          />
+        </div>
+        <div>
+          <label className="text-[10px] text-muted-foreground block mb-1">Height</label>
+          <input
+            type="text"
+            value={style.height || ''}
+            onChange={(e) => handleChange('height', e.target.value)}
+            placeholder="e.g. 100%, 50px"
+            className="w-full text-xs p-1 rounded border border-input bg-background"
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <label className="text-[10px] text-muted-foreground block mb-1">Padding</label>
+          <input
+            type="text"
+            value={style.padding || ''}
+            onChange={(e) => handleChange('padding', e.target.value)}
+            placeholder="e.g. 10px"
+            className="w-full text-xs p-1 rounded border border-input bg-background"
+          />
+        </div>
+        <div>
+          <label className="text-[10px] text-muted-foreground block mb-1">Margin</label>
+          <input
+            type="text"
+            value={style.margin || ''}
+            onChange={(e) => handleChange('margin', e.target.value)}
+            placeholder="e.g. 10px"
+            className="w-full text-xs p-1 rounded border border-input bg-background"
+          />
+        </div>
+      </div>
+
+      {/* Background Section */}
+      <div className="space-y-2 pt-2 border-t border-border/50">
+        <label className="text-[10px] uppercase font-semibold text-muted-foreground">Background</label>
+
+        <div className="flex gap-2">
+          <div className="flex-1">
+            <label className="text-[10px] text-muted-foreground block mb-1">Color</label>
+            <div className="flex gap-1">
+              <input
+                type="color"
+                value={(style.backgroundColor as string) || '#ffffff'}
+                onChange={(e) => handleChange('backgroundColor', e.target.value)}
+                className="h-6 w-8 p-0 border border-input rounded cursor-pointer"
+              />
+              <input
+                type="text"
+                value={style.backgroundColor || ''}
+                onChange={(e) => handleChange('backgroundColor', e.target.value)}
+                placeholder="#fff"
+                className="flex-1 text-xs p-1 rounded border border-input bg-background"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-[10px] text-muted-foreground block">Image URL</label>
+          <input
+            type="text"
+            value={(style.backgroundImage as string)?.replace('url(', '').replace(')', '') || ''}
+            onChange={(e) => handleChange('backgroundImage', e.target.value ? `url(${e.target.value})` : '')}
+            placeholder="https://..."
+            className="w-full text-xs p-1 rounded border border-input bg-background"
+          />
+
+          {style.backgroundImage && (
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="text-[10px] text-muted-foreground block mb-1">Size (Fit)</label>
+                <select
+                  value={style.backgroundSize as string || 'cover'}
+                  onChange={(e) => handleChange('backgroundSize', e.target.value)}
+                  className="w-full text-xs p-1 rounded border border-input bg-background"
+                >
+                  <option value="cover">Cover (Fill)</option>
+                  <option value="contain">Contain (Fit)</option>
+                  <option value="100% 100%">Stretch</option>
+                  <option value="auto">Auto</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-[10px] text-muted-foreground block mb-1">Position</label>
+                <select
+                  value={style.backgroundPosition as string || 'center'}
+                  onChange={(e) => handleChange('backgroundPosition', e.target.value)}
+                  className="w-full text-xs p-1 rounded border border-input bg-background"
+                >
+                  <option value="center">Center</option>
+                  <option value="top">Top</option>
+                  <option value="bottom">Bottom</option>
+                  <option value="left">Left</option>
+                  <option value="right">Right</option>
+                </select>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Border Section */}
+      <div className="grid grid-cols-2 gap-2 pt-2 border-t border-border/50">
+        <div>
+          <label className="text-[10px] text-muted-foreground block mb-1">Radius</label>
+          <input
+            type="text"
+            value={style.borderRadius || ''}
+            onChange={(e) => handleChange('borderRadius', e.target.value)}
+            placeholder="e.g. 50%, 8px"
+            className="w-full text-xs p-1 rounded border border-input bg-background"
+          />
+        </div>
+        <div>
+          <label className="text-[10px] text-muted-foreground block mb-1">Border</label>
+          <input
+            type="text"
+            value={style.border || ''}
+            onChange={(e) => handleChange('border', e.target.value)}
+            placeholder="e.g. 1px solid red"
+            className="w-full text-xs p-1 rounded border border-input bg-background"
+          />
+        </div>
+      </div>
+
+      {/* Typography Section */}
+      <div className="space-y-2 pt-2 border-t border-border/50">
+        <label className="text-[10px] uppercase font-semibold text-muted-foreground">Typography</label>
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <label className="text-[10px] text-muted-foreground block mb-1">Color</label>
+            <div className="flex gap-1">
+              <input
+                type="color"
+                value={(style.color as string) || '#000000'}
+                onChange={(e) => handleChange('color', e.target.value)}
+                className="h-6 w-6 p-0 border border-input rounded cursor-pointer"
+              />
+              <input
+                type="text"
+                value={style.color || ''}
+                onChange={(e) => handleChange('color', e.target.value)}
+                placeholder="#000"
+                className="flex-1 text-xs p-1 rounded border border-input bg-background"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="text-[10px] text-muted-foreground block mb-1">Font Size</label>
+            <input
+              type="text"
+              value={style.fontSize || ''}
+              onChange={(e) => handleChange('fontSize', e.target.value)}
+              placeholder="e.g. 16px"
+              className="w-full text-xs p-1 rounded border border-input bg-background"
+            />
+          </div>
+          <div>
+            <label className="text-[10px] text-muted-foreground block mb-1">Weight</label>
+            <select
+              value={style.fontWeight || 'normal'}
+              onChange={(e) => handleChange('fontWeight', e.target.value)}
+              className="w-full text-xs p-1 rounded border border-input bg-background"
+            >
+              <option value="normal">Normal</option>
+              <option value="bold">Bold</option>
+              <option value="500">Medium</option>
+              <option value="600">Semi-Bold</option>
+              <option value="300">Light</option>
+            </select>
+          </div>
+          <div>
+            <label className="text-[10px] text-muted-foreground block mb-1">Align</label>
+            <select
+              value={style.textAlign || 'left'}
+              onChange={(e) => handleChange('textAlign', e.target.value)}
+              className="w-full text-xs p-1 rounded border border-input bg-background"
+            >
+              <option value="left">Left</option>
+              <option value="center">Center</option>
+              <option value="right">Right</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* Flex Controls (Conditional) */}
+      {(style.display === 'flex') && (
+        <div className="space-y-2 pt-2 border-t border-border/50">
+          <label className="text-[10px] uppercase font-semibold text-muted-foreground">Flex Layout</label>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="text-[10px] text-muted-foreground block mb-1">Direction</label>
+              <select
+                value={style.flexDirection || 'row'}
+                onChange={(e) => handleChange('flexDirection', e.target.value)}
+                className="w-full text-xs p-1 rounded border border-input bg-background"
+              >
+                <option value="row">Row (Horizontal)</option>
+                <option value="column">Column (Vertical)</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-[10px] text-muted-foreground block mb-1">Align Items</label>
+              <select
+                value={style.alignItems || 'stretch'}
+                onChange={(e) => handleChange('alignItems', e.target.value)}
+                className="w-full text-xs p-1 rounded border border-input bg-background"
+              >
+                <option value="stretch">Stretch</option>
+                <option value="center">Center</option>
+                <option value="flex-start">Start</option>
+                <option value="flex-end">End</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-[10px] text-muted-foreground block mb-1">Justify Content</label>
+              <select
+                value={style.justifyContent || 'flex-start'}
+                onChange={(e) => handleChange('justifyContent', e.target.value)}
+                className="w-full text-xs p-1 rounded border border-input bg-background"
+              >
+                <option value="flex-start">Start</option>
+                <option value="center">Center</option>
+                <option value="flex-end">End</option>
+                <option value="space-between">Space Between</option>
+                <option value="space-around">Space Around</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-[10px] text-muted-foreground block mb-1">Gap</label>
+              <input
+                type="text"
+                value={style.gap || ''}
+                onChange={(e) => handleChange('gap', e.target.value)}
+                placeholder="e.g. 5px"
+                className="w-full text-xs p-1 rounded border border-input bg-background"
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
