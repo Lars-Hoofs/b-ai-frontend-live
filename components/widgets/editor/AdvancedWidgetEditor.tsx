@@ -707,8 +707,14 @@ export default function AdvancedWidgetEditor({ config, onChange }: { config: Wid
                                         <input type="checkbox" checked={block.mobileHidden || false} onChange={e => updateChatBlock(block.id, { mobileHidden: e.target.checked })} className="w-3.5 h-3.5 rounded" />
                                         Hide on Mobile
                                     </label>
-                                    <div className="pt-3 border-t border-border/20">
-                                        <StyleEditor style={block.style || {}} onChange={s => updateChatBlock(block.id, { style: s })} onHoverChange={s => updateChatBlock(block.id, { hoverStyle: s })} />
+                                    <div className="border-t border-border/20">
+                                        <StyleEditor
+                                            style={block.style || {}}
+                                            animation={block.animation as any}
+                                            onChange={s => updateChatBlock(block.id, { style: s })}
+                                            onHoverChange={s => updateChatBlock(block.id, { hoverStyle: s })}
+                                            onAnimationChange={a => updateChatBlock(block.id, { animation: a })}
+                                        />
                                     </div>
                                 </div>
                             );
