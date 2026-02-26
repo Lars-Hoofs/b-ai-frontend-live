@@ -63,6 +63,57 @@ function StructureItem({ block, selectedBlockId, onSelectBlock, onDeleteBlock }:
     );
 }
 
+// ─── Sortable Chat Structure Item ─────────────────────────────────────────
+function ChatStructureItem({ block, selectedChatBlockId, onSelectBlock, onDeleteBlock }: {
+    block: ChatBlock; selectedChatBlockId: string | null;
+    onSelectBlock: (id: string) => void; onDeleteBlock: (id: string) => void;
+}) {
+    const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: block.id });
+    const isSelected = selectedChatBlockId === block.id;
+    const style = { transform: CSS.Transform.toString(transform), transition };
+
+    const icons: Record<string, React.ReactNode> = {
+        header: <RemixIcons.RiLayoutTopLine size={13} />, messages: <RemixIcons.RiMessage3Line size={13} />,
+        input: <RemixIcons.RiInputMethodLine size={13} />, container: <RemixIcons.RiLayoutLine size={13} />,
+        text: <RemixIcons.RiText size={13} />, button: <RemixIcons.RiCheckboxCircleLine size={13} />,
+        divider: <RemixIcons.RiSeparator size={13} />, branding: <RemixIcons.RiSparklingLine size={13} />,
+        icon: <RemixIcons.RiStarLine size={13} />, image: <RemixIcons.RiImageLine size={13} />
+    };
+
+    return (
+        <div ref={setNodeRef} style={style} className="mb-0.5">
+            <div className={`flex items-center gap-1.5 px-2.5 py-2 rounded-lg text-xs border cursor-pointer select-none transition-all duration-200 group
+                ${isSelected
+                    ? 'bg-gradient-to-r from-primary/15 to-primary/5 border-primary/40 text-primary font-medium shadow-[0_0_12px_rgba(99,102,241,0.1)]'
+                    : 'bg-card/50 border-border/30 hover:bg-muted/50 hover:border-border/60'}`}
+                onClick={(e) => { e.stopPropagation(); onSelectBlock(block.id); }}
+                {...attributes} {...listeners}
+            >
+                <span className="text-muted-foreground/40 hover:text-muted-foreground cursor-grab"><RemixIcons.RiDraggable size={14} /></span>
+                <span className="text-muted-foreground/70">{icons[block.type] || <RemixIcons.RiLayoutLine size={13} />}</span>
+                <span className="flex-1 truncate text-[11px] font-semibold tracking-wide uppercase">
+                    {block.type}
+                    {block.content && <span className="text-muted-foreground/50 ml-1 font-normal capitalize tracking-normal">• {block.content.length > 15 ? block.content.substring(0, 15) + '...' : block.content}</span>}
+                </span>
+                <button onClick={(e) => { e.stopPropagation(); onDeleteBlock(block.id); }}
+                    className="opacity-0 group-hover:opacity-100 text-muted-foreground/40 hover:text-red-400 p-0.5 rounded transition-all">
+                    <RemixIcons.RiDeleteBinLine size={12} />
+                </button>
+            </div>
+            {block.children && (
+                <div className="ml-3 pl-2.5 border-l border-border/20 mt-0.5">
+                    <SortableContext items={block.children.map(b => b.id)} strategy={verticalListSortingStrategy}>
+                        {block.children.map(child => (
+                            <ChatStructureItem key={child.id} block={child} selectedChatBlockId={selectedChatBlockId}
+                                onSelectBlock={onSelectBlock} onDeleteBlock={onDeleteBlock} />
+                        ))}
+                    </SortableContext>
+                </div>
+            )}
+        </div>
+    );
+}
+
 // ─── Style Editor ────────────────────────────────────────────────────
 function StyleEditor({ style, hoverStyle, onChange, onHoverChange }: {
     style: React.CSSProperties; hoverStyle?: React.CSSProperties;
@@ -293,6 +344,28 @@ export default function AdvancedWidgetEditor({ config, onChange }: { config: Wid
         }
     };
 
+    const findChatContainer = (id: string, items: ChatBlock[]): ChatBlock[] | undefined => {
+        if (items.some(i => i.id === id)) return items;
+        for (const item of items) {
+            if (item.children) { const f = findChatContainer(id, item.children); if (f) return f; }
+        }
+        return undefined;
+    };
+
+    const handleChatDragEnd = (event: DragEndEvent) => {
+        const { active, over } = event;
+        if (!over || active.id === over.id) return;
+        const ac = findChatContainer(active.id as string, config.chatStructure || []);
+        const oc = findChatContainer(over.id as string, config.chatStructure || []);
+        if (ac && oc && ac === oc) {
+            const oi = ac.findIndex(b => b.id === active.id), ni = oc.findIndex(b => b.id === over.id);
+            const ns = JSON.parse(JSON.stringify(config.chatStructure));
+            const fc = findChatContainer(active.id as string, ns)!;
+            const [moved] = fc.splice(oi, 1); fc.splice(ni, 0, moved);
+            updateChatStructure(ns);
+        }
+    };
+
     const updateBlock = (id: string, updates: Partial<LauncherBlock>) => {
         const rec = (blocks: LauncherBlock[]): LauncherBlock[] =>
             blocks.map(b => b.id === id ? { ...b, ...updates } : b.children ? { ...b, children: rec(b.children) } : b);
@@ -464,32 +537,18 @@ export default function AdvancedWidgetEditor({ config, onChange }: { config: Wid
                         <div className="flex-1 overflow-y-auto p-2 space-y-0.5">
                             {config.chatStructure?.length ? (
                                 <>
-                                    {config.chatStructure.map(block => {
-                                        const icons: Record<string, React.ReactNode> = {
-                                            header: <RemixIcons.RiLayoutTopLine size={13} />, messages: <RemixIcons.RiMessage3Line size={13} />,
-                                            input: <RemixIcons.RiInputMethodLine size={13} />, container: <RemixIcons.RiLayoutLine size={13} />,
-                                            text: <RemixIcons.RiText size={13} />, button: <RemixIcons.RiCheckboxCircleLine size={13} />,
-                                            divider: <RemixIcons.RiSeparator size={13} />, branding: <RemixIcons.RiSparklingLine size={13} />,
-                                        };
-                                        return (
-                                            <div key={block.id} onClick={() => setSelectedChatBlockId(block.id)}
-                                                className={`flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs border cursor-pointer transition-all group
-                          ${selectedChatBlockId === block.id
-                                                        ? 'bg-gradient-to-r from-primary/15 to-primary/5 border-primary/40 text-primary font-medium'
-                                                        : 'bg-card/50 border-border/30 hover:bg-muted/50'}`}>
-                                                <span className="text-muted-foreground/60">{icons[block.type]}</span>
-                                                <span className="flex-1 text-[11px] font-semibold uppercase tracking-wide">{block.type}</span>
-                                                <button onClick={e => { e.stopPropagation(); if (confirm(`Delete ${block.type}?`)) deleteChatBlock(block.id); }}
-                                                    className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-red-500/10 rounded transition-all">
-                                                    <RemixIcons.RiDeleteBinLine size={12} className="text-red-400" />
-                                                </button>
-                                            </div>
-                                        );
-                                    })}
+                                    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleChatDragEnd}>
+                                        <SortableContext items={config.chatStructure.map(b => b.id)} strategy={verticalListSortingStrategy}>
+                                            {config.chatStructure.map(block => (
+                                                <ChatStructureItem key={block.id} block={block} selectedChatBlockId={selectedChatBlockId}
+                                                    onSelectBlock={setSelectedChatBlockId} onDeleteBlock={deleteChatBlock} />
+                                            ))}
+                                        </SortableContext>
+                                    </DndContext>
                                     <div className="pt-3 mt-2 border-t border-border/20">
                                         <label className="text-[9px] text-muted-foreground uppercase font-bold tracking-widest mb-1.5 block">Add Block</label>
                                         <div className="grid grid-cols-2 gap-1">
-                                            {(['header', 'messages', 'input', 'container', 'text', 'button', 'divider', 'branding'] as const).map(type => (
+                                            {(['header', 'messages', 'input', 'container', 'text', 'button', 'divider', 'branding', 'icon', 'image'] as const).map(type => (
                                                 <button key={type} onClick={() => addChatBlock(null, type)}
                                                     className="px-2 py-1.5 text-[10px] font-medium bg-card/50 border border-border/30 hover:bg-primary/5 hover:border-primary/20 rounded-lg transition-all capitalize">
                                                     {type}
@@ -524,10 +583,11 @@ export default function AdvancedWidgetEditor({ config, onChange }: { config: Wid
                             return (
                                 <div className="space-y-3">
                                     <div className="px-2.5 py-1.5 bg-muted/30 rounded-lg text-[11px] font-mono uppercase tracking-wider text-muted-foreground">{block.type}</div>
-                                    {(['text', 'button', 'branding'] as const).includes(block.type as any) && (
+                                    {(['text', 'button', 'branding', 'icon', 'image'] as const).includes(block.type as any) && (
                                         <div className="space-y-1">
                                             <label className="text-[10px] font-bold text-muted-foreground/70 uppercase">Content</label>
                                             <input type="text" value={block.content || ''} onChange={e => updateChatBlock(block.id, { content: e.target.value })}
+                                                placeholder={block.type === 'icon' ? 'RiRobot2Line' : block.type === 'image' ? 'https://...' : ''}
                                                 className="w-full text-[11px] px-2.5 py-2 rounded-lg border border-border/40 bg-muted/20 outline-none" />
                                         </div>
                                     )}

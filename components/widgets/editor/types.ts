@@ -17,7 +17,7 @@ export interface LauncherBlock {
 // --- Chat Block ---
 export interface ChatBlock {
     id: string;
-    type: 'header' | 'messages' | 'input' | 'container' | 'text' | 'button' | 'divider' | 'branding';
+    type: 'header' | 'messages' | 'input' | 'container' | 'text' | 'button' | 'divider' | 'branding' | 'icon' | 'image';
     content?: string;
     style?: Record<string, any>;
     className?: string;

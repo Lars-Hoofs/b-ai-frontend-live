@@ -7,7 +7,7 @@ export const DEFAULT_CHAT_STRUCTURE: ChatBlock[] = [
         id: nanoid(),
         type: 'header',
         style: {
-            padding: '20px 24px',
+            padding: '16px 24px',
             backgroundColor: '#ffffff',
             borderBottom: '1px solid #e5e7eb',
             display: 'flex',
@@ -21,27 +21,35 @@ export const DEFAULT_CHAT_STRUCTURE: ChatBlock[] = [
                 style: {
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '16px'
+                    gap: '12px'
                 },
                 children: [
                     {
                         id: nanoid(),
-                        type: 'container', // Avatar
-                        content: '👤',
+                        type: 'container', // Avatar/Icon container
                         style: {
-                            width: '48px',
-                            height: '48px',
-                            borderRadius: '16px',
-                            backgroundColor: '#f3f4f6',
+                            width: '40px',
+                            height: '40px',
+                            borderRadius: '12px',
+                            background: 'linear-gradient(135deg, #a5b4fc 0%, #c084fc 100%)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            fontSize: '24px'
-                        }
+                            color: 'white'
+                        },
+                        children: [
+                            {
+                                id: nanoid(),
+                                type: 'icon',
+                                content: 'RiRobot2Line',
+                                style: { fontSize: '20px' }
+                            }
+                        ]
                     },
                     {
                         id: nanoid(),
                         type: 'container',
+                        style: { display: 'flex', flexDirection: 'column', gap: '2px' },
                         children: [
                             {
                                 id: nanoid(),
@@ -49,19 +57,35 @@ export const DEFAULT_CHAT_STRUCTURE: ChatBlock[] = [
                                 content: 'Chat Support',
                                 style: {
                                     fontWeight: '700',
-                                    fontSize: '18px',
+                                    fontSize: '15px',
                                     color: '#111827'
                                 }
                             },
                             {
                                 id: nanoid(),
-                                type: 'text',
-                                content: 'Online',
-                                style: {
-                                    fontSize: '13px',
-                                    color: '#6b7280',
-                                    marginTop: '2px'
-                                }
+                                type: 'container',
+                                style: { display: 'flex', alignItems: 'center', gap: '6px' },
+                                children: [
+                                    {
+                                        id: nanoid(),
+                                        type: 'container',
+                                        style: {
+                                            width: '6px',
+                                            height: '6px',
+                                            borderRadius: '50%',
+                                            backgroundColor: '#10b981'
+                                        }
+                                    },
+                                    {
+                                        id: nanoid(),
+                                        type: 'text',
+                                        content: 'We\'re here to help',
+                                        style: {
+                                            fontSize: '12px',
+                                            color: '#6b7280'
+                                        }
+                                    }
+                                ]
                             }
                         ]
                     }
@@ -73,20 +97,21 @@ export const DEFAULT_CHAT_STRUCTURE: ChatBlock[] = [
                 icon: 'RiCloseLine',
                 onClick: 'close-chat',
                 style: {
-                    width: '40px',
-                    height: '40px',
-                    borderRadius: '50%',
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '8px',
                     backgroundColor: 'transparent',
-                    border: 'none',
+                    border: '1px solid transparent',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontSize: '20px',
+                    fontSize: '18px',
                     color: '#6b7280'
                 },
                 hoverStyle: {
-                    backgroundColor: '#f3f4f6'
+                    backgroundColor: '#f3f4f6',
+                    color: '#111827'
                 }
             }
         ]
