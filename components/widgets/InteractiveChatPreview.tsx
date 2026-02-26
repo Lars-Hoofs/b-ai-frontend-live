@@ -14,7 +14,7 @@ export function InteractiveChatPreview({ config, isOpen, setIsOpen, isPreview = 
     // Generate the exact HTML that the user will see, using the backend engine
     const fetchPreview = async () => {
       try {
-        const res = await fetch('/api/widgets/preview', {
+        const res = await fetch('/api/widgets/preview-html', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
