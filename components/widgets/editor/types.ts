@@ -3,7 +3,7 @@ import React from 'react';
 // --- Launcher Block ---
 export interface LauncherBlock {
     id: string;
-    type: 'container' | 'row' | 'column' | 'icon' | 'text' | 'image';
+    type: 'container' | 'row' | 'column' | 'icon' | 'text' | 'image' | 'split' | 'status';
     content?: string;
     style?: React.CSSProperties;
     className?: string;
@@ -12,12 +12,14 @@ export interface LauncherBlock {
     linkUrl?: string;
     hoverStyle?: React.CSSProperties;
     mobileHidden?: boolean;
+    splitRatio?: number; // e.g., 30 for 30/70 split
+    statusType?: 'online' | 'offline' | 'away';
 }
 
 // --- Chat Block ---
 export interface ChatBlock {
     id: string;
-    type: 'header' | 'messages' | 'input' | 'container' | 'text' | 'button' | 'divider' | 'branding' | 'icon' | 'image';
+    type: 'header' | 'messages' | 'input' | 'container' | 'text' | 'button' | 'divider' | 'branding' | 'icon' | 'image' | 'split' | 'status';
     content?: string;
     style?: Record<string, any>;
     className?: string;
@@ -29,6 +31,8 @@ export interface ChatBlock {
     url?: string;
     hoverStyle?: Record<string, any>;
     mobileHidden?: boolean;
+    splitRatio?: number;
+    statusType?: 'online' | 'offline' | 'away';
 }
 
 // --- Full Widget Config ---

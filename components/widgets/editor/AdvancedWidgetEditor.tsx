@@ -27,6 +27,7 @@ function StructureItem({ block, selectedBlockId, onSelectBlock, onDeleteBlock }:
         icon: <RemixIcons.RiStarLine size={13} />, text: <RemixIcons.RiText size={13} />,
         image: <RemixIcons.RiImageLine size={13} />, row: <RemixIcons.RiLayoutRowLine size={13} />,
         column: <RemixIcons.RiLayoutColumnLine size={13} />, container: <RemixIcons.RiLayoutLine size={13} />,
+        split: <RemixIcons.RiLayoutLeftLine size={13} />, status: <RemixIcons.RiRecordCircleFill size={13} className="text-green-500" />
     };
 
     return (
@@ -77,7 +78,8 @@ function ChatStructureItem({ block, selectedChatBlockId, onSelectBlock, onDelete
         input: <RemixIcons.RiInputMethodLine size={13} />, container: <RemixIcons.RiLayoutLine size={13} />,
         text: <RemixIcons.RiText size={13} />, button: <RemixIcons.RiCheckboxCircleLine size={13} />,
         divider: <RemixIcons.RiSeparator size={13} />, branding: <RemixIcons.RiSparklingLine size={13} />,
-        icon: <RemixIcons.RiStarLine size={13} />, image: <RemixIcons.RiImageLine size={13} />
+        icon: <RemixIcons.RiStarLine size={13} />, image: <RemixIcons.RiImageLine size={13} />,
+        split: <RemixIcons.RiLayoutLeftLine size={13} />, status: <RemixIcons.RiRecordCircleFill size={13} className="text-green-500" />
     };
 
     return (
@@ -264,16 +266,40 @@ function PropertiesPanel({ blockId, config, onUpdateBlock }: {
             <div className="p-3.5 space-y-5">
                 {/* Content */}
                 <div className="space-y-2">
-                    <label className="text-[10px] uppercase font-bold text-muted-foreground/70 tracking-wider">Content</label>
+                    <label className="text-[10px] uppercase font-bold text-muted-foreground/70 tracking-wider">Type / Content</label>
                     <select value={block.type} onChange={e => onUpdateBlock(block.id, { type: e.target.value as any })}
                         className="w-full text-[11px] px-2.5 py-2 rounded-lg border border-border/40 bg-muted/20 outline-none">
                         <option value="container">Container (Box)</option><option value="row">Row</option><option value="column">Column</option>
                         <option value="text">Text</option><option value="icon">Icon</option><option value="image">Image</option>
+                        <option value="split">Split Layout</option><option value="status">Status Dot</option>
                     </select>
+
+                    {block.type === 'split' && (
+                        <div className="pt-2">
+                            <label className="text-[10px] uppercase font-bold text-muted-foreground/70 tracking-wider">Left Column Width ({block.splitRatio || 50}%)</label>
+                            <input type="range" min="10" max="90" value={block.splitRatio || 50} onChange={e => onUpdateBlock(block.id, { splitRatio: parseInt(e.target.value) })}
+                                className="w-full mt-1" />
+                        </div>
+                    )}
+
+                    {block.type === 'status' && (
+                        <div className="pt-2">
+                            <label className="text-[10px] uppercase font-bold text-muted-foreground/70 tracking-wider">Status Indicator</label>
+                            <select value={block.statusType || 'online'} onChange={e => onUpdateBlock(block.id, { statusType: e.target.value as any })}
+                                className="w-full text-[11px] px-2.5 py-2 mt-1 rounded-lg border border-border/40 bg-muted/20 outline-none">
+                                <option value="online">Online (Green)</option>
+                                <option value="away">Away (Yellow)</option>
+                                <option value="offline">Offline (Gray)</option>
+                            </select>
+                        </div>
+                    )}
+
                     {(['text', 'icon', 'image'] as const).includes(block.type as any) && (
-                        <input type="text" value={block.content || ''} onChange={e => onUpdateBlock(block.id, { content: e.target.value })}
-                            placeholder={block.type === 'icon' ? 'RiChat3Line' : block.type === 'image' ? 'https://...' : 'Text...'}
-                            className="w-full text-[11px] px-2.5 py-2 rounded-lg border border-border/40 bg-muted/20 focus:border-primary/40 outline-none" />
+                        <div className="pt-2">
+                            <input type="text" value={block.content || ''} onChange={e => onUpdateBlock(block.id, { content: e.target.value })}
+                                placeholder={block.type === 'icon' ? 'RiChat3Line' : block.type === 'image' ? 'https://...' : 'Text...'}
+                                className="w-full text-[11px] px-2.5 py-2 rounded-lg border border-border/40 bg-muted/20 focus:border-primary/40 outline-none" />
+                        </div>
                     )}
                 </div>
 
@@ -411,7 +437,18 @@ export default function AdvancedWidgetEditor({ config, onChange }: { config: Wid
     };
 
     const addChatBlock = (parentId: string | null, type: ChatBlock['type']) => {
-        const nb: ChatBlock = { id: nanoid(), type, content: type === 'text' ? 'New Text' : type === 'button' ? 'Click Me' : type === 'branding' ? 'Powered by AI' : undefined, placeholder: type === 'input' ? 'Type a message...' : undefined, style: type === 'container' ? { padding: '10px', backgroundColor: '#f9fafb' } : undefined };
+        const nb: ChatBlock = {
+            id: nanoid(), type,
+            content: type === 'text' ? 'New Text' : type === 'button' ? 'Click Me' : type === 'branding' ? 'Powered by AI' : undefined,
+            placeholder: type === 'input' ? 'Type a message...' : undefined,
+            style: type === 'container' || type === 'header' || type === 'messages' || type === 'input' ? { padding: '10px', backgroundColor: '#f9fafb' } : undefined,
+            splitRatio: type === 'split' ? 50 : undefined,
+            statusType: type === 'status' ? 'online' : undefined,
+            children: type === 'split' ? [
+                { id: nanoid(), type: 'container', style: { padding: '10px', flex: 1, backgroundColor: '#ffffff', border: '1px dashed #ccc' } },
+                { id: nanoid(), type: 'container', style: { padding: '10px', flex: 1, backgroundColor: '#ffffff', border: '1px dashed #ccc' } }
+            ] : undefined
+        };
         if (!parentId) { updateChatStructure([...(config.chatStructure || []), nb]); }
         else {
             const rec = (blocks: ChatBlock[]): ChatBlock[] =>
@@ -567,7 +604,7 @@ export default function AdvancedWidgetEditor({ config, onChange }: { config: Wid
                                         </div>
                                         {chatTarget ? (
                                             <div className="grid grid-cols-2 gap-1">
-                                                {(['header', 'messages', 'input', 'container', 'text', 'button', 'divider', 'branding', 'icon', 'image'] as const).map(type => (
+                                                {(['header', 'messages', 'input', 'container', 'split', 'text', 'button', 'divider', 'branding', 'icon', 'image', 'status'] as const).map(type => (
                                                     <button key={type} onClick={() => addChatBlock(chatTarget.id, type)}
                                                         className="px-2 py-1.5 text-[10px] font-medium bg-card/50 border border-border/30 hover:bg-primary/5 hover:border-primary/20 rounded-lg transition-all capitalize">
                                                         {type}
@@ -641,6 +678,24 @@ export default function AdvancedWidgetEditor({ config, onChange }: { config: Wid
                                             <input type="text" value={block.content || ''} onChange={e => updateChatBlock(block.id, { content: e.target.value })}
                                                 placeholder={block.type === 'icon' ? 'RiRobot2Line' : block.type === 'image' ? 'https://...' : ''}
                                                 className="w-full text-[11px] px-2.5 py-2 rounded-lg border border-border/40 bg-muted/20 outline-none" />
+                                        </div>
+                                    )}
+                                    {block.type === 'split' && (
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] uppercase font-bold text-muted-foreground/70 tracking-wider">Left Column Width ({block.splitRatio || 50}%)</label>
+                                            <input type="range" min="10" max="90" value={block.splitRatio || 50} onChange={e => updateChatBlock(block.id, { splitRatio: parseInt(e.target.value) })}
+                                                className="w-full mt-1" />
+                                        </div>
+                                    )}
+                                    {block.type === 'status' && (
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] uppercase font-bold text-muted-foreground/70 tracking-wider">Status Indicator</label>
+                                            <select value={block.statusType || 'online'} onChange={e => updateChatBlock(block.id, { statusType: e.target.value as any })}
+                                                className="w-full text-[11px] px-2.5 py-2 mt-1 rounded-lg border border-border/40 bg-muted/20 outline-none">
+                                                <option value="online">Online (Green)</option>
+                                                <option value="away">Away (Yellow)</option>
+                                                <option value="offline">Offline (Gray)</option>
+                                            </select>
                                         </div>
                                     )}
                                     {block.type === 'input' && (
