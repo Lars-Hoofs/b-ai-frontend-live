@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import AdvancedWidgetEditor, { WidgetConfig } from '@/components/widgets/AdvancedWidgetEditor';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
@@ -40,7 +40,24 @@ function WidgetEditor() {
   const [agents, setAgents] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const isDirtyRef = useRef(false);
+
+  // Auto-save: trigger 1.5s after every config change (skip initial load)
+  useEffect(() => {
+    if (!widgetId) return; // only auto-save existing widgets
+    if (!isDirtyRef.current) { isDirtyRef.current = true; return; }
+    setSaveStatus('saving');
+    const t = setTimeout(() => {
+      handleSave().then(() => {
+        setSaveStatus('saved');
+        setTimeout(() => setSaveStatus('idle'), 2000);
+      }).catch(() => setSaveStatus('idle'));
+    }, 1500);
+    return () => clearTimeout(t);
+  }, [config]);
+
 
   useEffect(() => {
     const onFullscreenChange = () => {

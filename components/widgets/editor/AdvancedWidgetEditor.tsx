@@ -16,9 +16,9 @@ import { WidgetConfig, LauncherBlock, ChatBlock, ensureHex } from './types';
 export type { WidgetConfig, LauncherBlock, ChatBlock };
 
 // ─── Sortable Structure Item ─────────────────────────────────────────
-function StructureItem({ block, selectedBlockId, onSelectBlock, onDeleteBlock }: {
+function StructureItem({ block, selectedBlockId, onSelectBlock, onDeleteBlock, onDuplicateBlock }: {
     block: LauncherBlock; selectedBlockId: string | null;
-    onSelectBlock: (id: string) => void; onDeleteBlock: (id: string) => void;
+    onSelectBlock: (id: string) => void; onDeleteBlock: (id: string) => void; onDuplicateBlock: (id: string) => void;
 }) {
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: block.id });
     const isSelected = selectedBlockId === block.id;
@@ -32,7 +32,7 @@ function StructureItem({ block, selectedBlockId, onSelectBlock, onDeleteBlock }:
 
     return (
         <div ref={setNodeRef} style={style} className="mb-0.5">
-            <div className={`flex items-center gap-1.5 px-2.5 py-2 rounded-lg text-xs border cursor-pointer select-none transition-all duration-200
+            <div className={`group flex items-center gap-1.5 px-2.5 py-2 rounded-lg text-xs border cursor-pointer select-none transition-all duration-200
         ${isSelected
                     ? 'bg-gradient-to-r from-primary/15 to-primary/5 border-primary/40 text-primary font-medium shadow-[0_0_12px_rgba(99,102,241,0.1)]'
                     : 'bg-card/50 border-border/30 hover:bg-muted/50 hover:border-border/60'}`}
@@ -45,8 +45,12 @@ function StructureItem({ block, selectedBlockId, onSelectBlock, onDeleteBlock }:
                     {block.type.toUpperCase()}
                     {block.content && <span className="text-muted-foreground/50 ml-1 font-normal">• {block.content.substring(0, 12)}</span>}
                 </span>
+                <button onClick={(e) => { e.stopPropagation(); onDuplicateBlock(block.id); }}
+                    className="opacity-0 group-hover:opacity-100 text-muted-foreground/40 hover:text-primary p-0.5 rounded transition-all" title="Duplicate">
+                    <RemixIcons.RiFileCopyLine size={12} />
+                </button>
                 <button onClick={(e) => { e.stopPropagation(); onDeleteBlock(block.id); }}
-                    className="opacity-0 group-hover:opacity-100 text-muted-foreground/40 hover:text-red-400 p-0.5 rounded transition-all">
+                    className="opacity-0 group-hover:opacity-100 text-muted-foreground/40 hover:text-red-400 p-0.5 rounded transition-all" title="Delete">
                     <RemixIcons.RiDeleteBinLine size={12} />
                 </button>
             </div>
@@ -55,7 +59,7 @@ function StructureItem({ block, selectedBlockId, onSelectBlock, onDeleteBlock }:
                     <SortableContext items={block.children.map(b => b.id)} strategy={verticalListSortingStrategy}>
                         {block.children.map(child => (
                             <StructureItem key={child.id} block={child} selectedBlockId={selectedBlockId}
-                                onSelectBlock={onSelectBlock} onDeleteBlock={onDeleteBlock} />
+                                onSelectBlock={onSelectBlock} onDeleteBlock={onDeleteBlock} onDuplicateBlock={onDuplicateBlock} />
                         ))}
                     </SortableContext>
                 </div>
@@ -65,9 +69,9 @@ function StructureItem({ block, selectedBlockId, onSelectBlock, onDeleteBlock }:
 }
 
 // ─── Sortable Chat Structure Item ─────────────────────────────────────────
-function ChatStructureItem({ block, selectedChatBlockId, onSelectBlock, onDeleteBlock }: {
+function ChatStructureItem({ block, selectedChatBlockId, onSelectBlock, onDeleteBlock, onDuplicateBlock }: {
     block: ChatBlock; selectedChatBlockId: string | null;
-    onSelectBlock: (id: string) => void; onDeleteBlock: (id: string) => void;
+    onSelectBlock: (id: string) => void; onDeleteBlock: (id: string) => void; onDuplicateBlock: (id: string) => void;
 }) {
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: block.id });
     const isSelected = selectedChatBlockId === block.id;
@@ -107,9 +111,168 @@ function ChatStructureItem({ block, selectedChatBlockId, onSelectBlock, onDelete
                     <SortableContext items={block.children.map(b => b.id)} strategy={verticalListSortingStrategy}>
                         {block.children.map(child => (
                             <ChatStructureItem key={child.id} block={child} selectedChatBlockId={selectedChatBlockId}
-                                onSelectBlock={onSelectBlock} onDeleteBlock={onDeleteBlock} />
+                                onSelectBlock={onSelectBlock} onDeleteBlock={onDeleteBlock} onDuplicateBlock={onDuplicateBlock} />
                         ))}
                     </SortableContext>
+                </div>
+            )}
+        </div>
+    );
+}
+
+// ─── Background Editor ───────────────────────────────────────────────
+type BgMode = 'solid' | 'linear' | 'radial' | 'image' | 'glass' | 'none';
+
+function detectBgMode(style: React.CSSProperties): BgMode {
+    const bg = style.background as string || '';
+    const bgImage = style.backgroundImage as string || '';
+    if (style.backdropFilter) return 'glass';
+    if (bg.startsWith('linear-gradient') || bgImage.startsWith('linear-gradient')) return 'linear';
+    if (bg.startsWith('radial-gradient') || bgImage.startsWith('radial-gradient')) return 'radial';
+    if (bgImage.startsWith('url(') || bg.startsWith('url(')) return 'image';
+    if (!style.backgroundColor && !bg && !bgImage && !style.backdropFilter) return 'none';
+    return 'solid';
+}
+
+function BackgroundEditor({ style, onChange }: { style: React.CSSProperties; onChange: (patch: Partial<React.CSSProperties>) => void }) {
+    const mode = detectBgMode(style);
+    const [activeMode, setActiveMode] = useState<BgMode>(mode);
+
+    // Parse existing gradient colors if present
+    const existingBg = (style.background as string) || (style.backgroundImage as string) || '';
+    const parseGradientColors = (s: string): [string, string, string] => {
+        const m = s.match(/gradient\((.*?)\)$/);
+        if (!m) return ['135deg', '#6366f1', '#8b5cf6'];
+        const parts = m[1].split(',').map(p => p.trim());
+        const angle = parts[0].includes('deg') ? parts[0] : '135deg';
+        const c1 = parts.find(p => p.startsWith('#') || p.startsWith('rgb')) || '#6366f1';
+        const c2 = parts.filter(p => p.startsWith('#') || p.startsWith('rgb'))[1] || '#8b5cf6';
+        return [angle, c1, c2];
+    };
+    const [gAngle, gFrom, gTo] = parseGradientColors(existingBg);
+    const [gradAngle, setGradAngle] = useState(parseInt(gAngle) || 135);
+    const [gradFrom, setGradFrom] = useState(gFrom);
+    const [gradTo, setGradTo] = useState(gTo);
+    const [imgUrl, setImgUrl] = useState(() => { const m = existingBg.match(/url\(["']?(.*?)["']?\)/); return m ? m[1] : ''; });
+    const [glassBlur, setGlassBlur] = useState(() => { const m = String(style.backdropFilter || '').match(/blur\((\d+)px/); return m ? parseInt(m[1]) : 8; });
+    const [glassColor, setGlassColor] = useState((style.backgroundColor as string) || 'rgba(255,255,255,0.1)');
+    const [solidColor, setSolidColor] = useState((style.backgroundColor as string) || '#ffffff');
+
+    const applyMode = (m: BgMode) => {
+        setActiveMode(m);
+        if (m === 'none') onChange({ backgroundColor: undefined, background: undefined, backgroundImage: undefined, backdropFilter: undefined });
+        else if (m === 'solid') onChange({ backgroundColor: solidColor, background: undefined, backgroundImage: undefined, backdropFilter: undefined });
+        else if (m === 'linear') onChange({ background: `linear-gradient(${gradAngle}deg, ${gradFrom}, ${gradTo})`, backgroundColor: undefined, backgroundImage: undefined, backdropFilter: undefined });
+        else if (m === 'radial') onChange({ background: `radial-gradient(circle at center, ${gradFrom}, ${gradTo})`, backgroundColor: undefined, backgroundImage: undefined, backdropFilter: undefined });
+        else if (m === 'image') onChange({ backgroundImage: `url("${imgUrl}")`, backgroundSize: (style.backgroundSize as string) || 'cover', backgroundPosition: (style.backgroundPosition as string) || 'center', backgroundColor: undefined, background: undefined, backdropFilter: undefined });
+        else if (m === 'glass') onChange({ backdropFilter: `blur(${glassBlur}px)`, WebkitBackdropFilter: `blur(${glassBlur}px)`, backgroundColor: glassColor, background: undefined, backgroundImage: undefined });
+    };
+
+    const updateGradient = (angle: number, from: string, to: string, type: 'linear' | 'radial') => {
+        if (type === 'linear') onChange({ background: `linear-gradient(${angle}deg, ${from}, ${to})`, backgroundColor: undefined, backgroundImage: undefined });
+        else onChange({ background: `radial-gradient(circle at center, ${from}, ${to})`, backgroundColor: undefined, backgroundImage: undefined });
+    };
+
+    const PRESETS = [
+        { label: '↗', value: 45 }, { label: '→', value: 90 }, { label: '↘', value: 135 },
+        { label: '↓', value: 180 }, { label: '↙', value: 225 }, { label: '←', value: 270 }
+    ];
+
+    return (
+        <div className="space-y-2">
+            <label className="text-[10px] font-bold text-muted-foreground/70 uppercase tracking-wider">Fill Type</label>
+            <div className="grid grid-cols-3 gap-1">
+                {(['solid', 'linear', 'radial', 'image', 'glass', 'none'] as BgMode[]).map(m => (
+                    <button key={m} onClick={() => applyMode(m)}
+                        className={`text-[9px] py-1.5 px-1 rounded-md font-semibold uppercase tracking-wider transition-all border ${activeMode === m ? 'bg-primary text-primary-foreground border-primary' : 'border-border/40 text-muted-foreground hover:border-primary/40'
+                            }`}>
+                        {m === 'linear' ? 'Linear ∇' : m === 'radial' ? 'Radial ◎' : m === 'glass' ? '⬜ Glass' : m === 'image' ? '🖼 Image' : m === 'none' ? '∅ None' : '■ Solid'}
+                    </button>
+                ))}
+            </div>
+
+            {activeMode === 'solid' && (
+                <div className="flex gap-1 items-center">
+                    <input type="color" value={solidColor.startsWith('#') ? solidColor : '#ffffff'} onChange={e => { setSolidColor(e.target.value); onChange({ backgroundColor: e.target.value, background: undefined }); }}
+                        className="w-8 h-8 rounded-lg border border-border/40 p-0 cursor-pointer flex-shrink-0" />
+                    <input type="text" value={solidColor} onChange={e => { setSolidColor(e.target.value); onChange({ backgroundColor: e.target.value, background: undefined }); }}
+                        placeholder="#fff or rgba(...)" className="flex-1 text-[11px] px-2 py-1.5 rounded-lg border border-border/40 bg-muted/20 outline-none" />
+                </div>
+            )}
+
+            {(activeMode === 'linear' || activeMode === 'radial') && (
+                <div className="space-y-2">
+                    <div className="grid grid-cols-2 gap-2">
+                        <div className="space-y-1">
+                            <label className="text-[9px] text-muted-foreground/60 uppercase">From</label>
+                            <div className="flex gap-1">
+                                <input type="color" value={gradFrom.startsWith('#') ? gradFrom : '#6366f1'} onChange={e => { setGradFrom(e.target.value); updateGradient(gradAngle, e.target.value, gradTo, activeMode as any); }}
+                                    className="w-7 h-7 rounded-md border border-border/40 p-0 cursor-pointer" />
+                                <input type="text" value={gradFrom} onChange={e => { setGradFrom(e.target.value); updateGradient(gradAngle, e.target.value, gradTo, activeMode as any); }}
+                                    className="flex-1 text-[10px] px-1.5 py-1 rounded-lg border border-border/40 bg-muted/20 outline-none" />
+                            </div>
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-[9px] text-muted-foreground/60 uppercase">To</label>
+                            <div className="flex gap-1">
+                                <input type="color" value={gradTo.startsWith('#') ? gradTo : '#8b5cf6'} onChange={e => { setGradTo(e.target.value); updateGradient(gradAngle, gradFrom, e.target.value, activeMode as any); }}
+                                    className="w-7 h-7 rounded-md border border-border/40 p-0 cursor-pointer" />
+                                <input type="text" value={gradTo} onChange={e => { setGradTo(e.target.value); updateGradient(gradAngle, gradFrom, e.target.value, activeMode as any); }}
+                                    className="flex-1 text-[10px] px-1.5 py-1 rounded-lg border border-border/40 bg-muted/20 outline-none" />
+                            </div>
+                        </div>
+                    </div>
+                    {activeMode === 'linear' && (
+                        <div className="space-y-1">
+                            <label className="text-[9px] text-muted-foreground/60 uppercase">Angle ({gradAngle}°)</label>
+                            <input type="range" min="0" max="360" value={gradAngle} onChange={e => { const a = parseInt(e.target.value); setGradAngle(a); updateGradient(a, gradFrom, gradTo, 'linear'); }}
+                                className="w-full" />
+                            <div className="flex gap-1">
+                                {PRESETS.map(p => (
+                                    <button key={p.value} onClick={() => { setGradAngle(p.value); updateGradient(p.value, gradFrom, gradTo, 'linear'); }}
+                                        className="flex-1 text-[10px] py-1 rounded border border-border/40 hover:border-primary/40 transition-all">{p.label}</button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                    <div className="h-6 rounded-lg" style={{ background: activeMode === 'linear' ? `linear-gradient(${gradAngle}deg, ${gradFrom}, ${gradTo})` : `radial-gradient(circle at center, ${gradFrom}, ${gradTo})` }} />
+                </div>
+            )}
+
+            {activeMode === 'image' && (
+                <div className="space-y-2">
+                    <input type="text" value={imgUrl} onChange={e => { setImgUrl(e.target.value); onChange({ backgroundImage: `url("${e.target.value}")`, background: undefined }); }}
+                        placeholder="https://... or /path/to/image.jpg" className="w-full text-[11px] px-2.5 py-2 rounded-lg border border-border/40 bg-muted/20 outline-none" />
+                    <div className="grid grid-cols-3 gap-1">
+                        {(['cover', 'contain', 'auto', '100% 100%', '50%', 'repeat'] as const).map(s => (
+                            <button key={s} onClick={() => onChange({ backgroundSize: s === 'repeat' ? undefined : s, backgroundRepeat: s === 'repeat' ? 'repeat' : 'no-repeat' })}
+                                className={`text-[9px] py-1 rounded border transition-all ${(style.backgroundSize === s || (s === 'repeat' && style.backgroundRepeat === 'repeat'))
+                                    ? 'bg-primary text-primary-foreground border-primary' : 'border-border/40 text-muted-foreground hover:border-primary/40'
+                                    }`}>{s}</button>
+                        ))}
+                    </div>
+                    <div className="grid grid-cols-2 gap-1">
+                        {(['center', 'top', 'bottom', 'left', 'right', 'top left', 'top right', 'bottom left'].map(pos => (
+                            <button key={pos} onClick={() => onChange({ backgroundPosition: pos })}
+                                className={`text-[9px] py-1 rounded border transition-all ${style.backgroundPosition === pos ? 'bg-primary text-primary-foreground border-primary' : 'border-border/40 text-muted-foreground hover:border-primary/40'
+                                    }`}>{pos}</button>
+                        )))}
+                    </div>
+                </div>
+            )}
+
+            {activeMode === 'glass' && (
+                <div className="space-y-2">
+                    <div className="space-y-1">
+                        <label className="text-[9px] text-muted-foreground/60 uppercase">Blur ({glassBlur}px)</label>
+                        <input type="range" min="0" max="40" value={glassBlur} onChange={e => { const b = parseInt(e.target.value); setGlassBlur(b); onChange({ backdropFilter: `blur(${b}px)`, WebkitBackdropFilter: `blur(${b}px)` }); }}
+                            className="w-full" />
+                    </div>
+                    <div className="space-y-1">
+                        <label className="text-[9px] text-muted-foreground/60 uppercase">Overlay Color</label>
+                        <input type="text" value={glassColor} onChange={e => { setGlassColor(e.target.value); onChange({ backgroundColor: e.target.value }); }}
+                            placeholder="rgba(255,255,255,0.1)" className="w-full text-[11px] px-2 py-1.5 rounded-lg border border-border/40 bg-muted/20 outline-none" />
+                    </div>
                 </div>
             )}
         </div>
@@ -189,24 +352,14 @@ function StyleEditor({ style, hoverStyle, onChange, onHoverChange }: {
 
                 {/* Colors */}
                 <div className="pt-2 border-t border-border/20 space-y-2">
-                    <div className="grid grid-cols-2 gap-2">
-                        <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-muted-foreground/70 uppercase">Background</label>
-                            <div className="flex gap-1">
-                                <input type="color" value={(current.backgroundColor as string) || '#ffffff'} onChange={e => set('backgroundColor', e.target.value)}
-                                    className="w-7 h-7 rounded-md border border-border/40 p-0 cursor-pointer" />
-                                <input type="text" value={(current.backgroundColor as string) || ''} onChange={e => set('backgroundColor', e.target.value)}
-                                    className="flex-1 text-[11px] px-2 py-1 rounded-lg border border-border/40 bg-muted/20 outline-none" placeholder="#fff" />
-                            </div>
-                        </div>
-                        <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-muted-foreground/70 uppercase">Text Color</label>
-                            <div className="flex gap-1">
-                                <input type="color" value={(current.color as string) || '#000000'} onChange={e => set('color', e.target.value)}
-                                    className="w-7 h-7 rounded-md border border-border/40 p-0 cursor-pointer" />
-                                <input type="text" value={(current.color as string) || ''} onChange={e => set('color', e.target.value)}
-                                    className="flex-1 text-[11px] px-2 py-1 rounded-lg border border-border/40 bg-muted/20 outline-none" placeholder="#000" />
-                            </div>
+                    <BackgroundEditor style={current} onChange={patch => update({ ...current, ...patch })} />
+                    <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-muted-foreground/70 uppercase">Text Color</label>
+                        <div className="flex gap-1">
+                            <input type="color" value={(current.color as string) || '#000000'} onChange={e => set('color', e.target.value)}
+                                className="w-7 h-7 rounded-md border border-border/40 p-0 cursor-pointer" />
+                            <input type="text" value={(current.color as string) || ''} onChange={e => set('color', e.target.value)}
+                                className="flex-1 text-[11px] px-2 py-1 rounded-lg border border-border/40 bg-muted/20 outline-none" placeholder="#000 or rgba(...)" />
                         </div>
                     </div>
                     <div className="space-y-1">
@@ -448,12 +601,59 @@ export default function AdvancedWidgetEditor({ config, onChange }: { config: Wid
     const [activeTab, setActiveTab] = useState<'launcher' | 'chat-builder' | 'chat-settings'>('launcher');
     const [selectedChatBlockId, setSelectedChatBlockId] = useState<string | null>(null);
 
+    // ── Undo / Redo ──
+    const historyRef = React.useRef<WidgetConfig[]>([config]);
+    const historyIndexRef = React.useRef(0);
+    const [canUndo, setCanUndo] = useState(false);
+    const [canRedo, setCanRedo] = useState(false);
+
+    const pushHistory = React.useCallback((newConfig: WidgetConfig) => {
+        const h = historyRef.current.slice(0, historyIndexRef.current + 1);
+        h.push(newConfig);
+        if (h.length > 50) h.shift();
+        historyRef.current = h;
+        historyIndexRef.current = h.length - 1;
+        setCanUndo(historyIndexRef.current > 0);
+        setCanRedo(false);
+        onChange(newConfig);
+    }, [onChange]);
+
+    const undo = React.useCallback(() => {
+        if (historyIndexRef.current > 0) {
+            historyIndexRef.current--;
+            const c = historyRef.current[historyIndexRef.current];
+            setCanUndo(historyIndexRef.current > 0);
+            setCanRedo(true);
+            onChange(c);
+        }
+    }, [onChange]);
+
+    const redo = React.useCallback(() => {
+        if (historyIndexRef.current < historyRef.current.length - 1) {
+            historyIndexRef.current++;
+            const c = historyRef.current[historyIndexRef.current];
+            setCanUndo(true);
+            setCanRedo(historyIndexRef.current < historyRef.current.length - 1);
+            onChange(c);
+        }
+    }, [onChange]);
+
+    useEffect(() => {
+        const handler = (e: KeyboardEvent) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'z' && !e.shiftKey) { e.preventDefault(); undo(); }
+            if ((e.metaKey || e.ctrlKey) && e.key === 'z' && e.shiftKey) { e.preventDefault(); redo(); }
+            if ((e.metaKey || e.ctrlKey) && e.key === 'y') { e.preventDefault(); redo(); }
+        };
+        window.addEventListener('keydown', handler);
+        return () => window.removeEventListener('keydown', handler);
+    }, [undo, redo]);
+
     useEffect(() => {
         if (config.launcherStructure?.length && !selectedBlockId) setSelectedBlockId(config.launcherStructure[0].id);
     }, [config.launcherStructure]);
 
     // ── Launcher CRUD ──
-    const updateStructure = (s: LauncherBlock[]) => onChange({ ...config, launcherStructure: s });
+    const updateStructure = (s: LauncherBlock[]) => pushHistory({ ...config, launcherStructure: s });
 
     const findContainer = (id: string, items: LauncherBlock[]): LauncherBlock[] | undefined => {
         if (items.some(i => i.id === id)) return items;
@@ -516,6 +716,22 @@ export default function AdvancedWidgetEditor({ config, onChange }: { config: Wid
         if (selectedBlockId === id) setSelectedBlockId(null);
     };
 
+    // Deep clone a block with fresh IDs
+    const cloneBlock = (b: LauncherBlock): LauncherBlock => ({ ...JSON.parse(JSON.stringify(b)), id: nanoid(), children: b.children?.map(cloneBlock) });
+    const cloneChatBlock = (b: ChatBlock): ChatBlock => ({ ...JSON.parse(JSON.stringify(b)), id: nanoid(), children: b.children?.map(cloneChatBlock) });
+
+    const duplicateBlock = (id: string) => {
+        const rec = (blocks: LauncherBlock[]): LauncherBlock[] => {
+            const result: LauncherBlock[] = [];
+            for (const b of blocks) {
+                result.push(b.children ? { ...b, children: rec(b.children) } : b);
+                if (b.id === id) result.push(cloneBlock(b));
+            }
+            return result;
+        };
+        updateStructure(rec(config.launcherStructure || []));
+    };
+
     const addBlock = (parentId: string | null) => {
         const nb: LauncherBlock = { id: nanoid(), type: 'container', style: { padding: '10px', backgroundColor: '#eeeeee', borderRadius: '8px', minHeight: '40px' }, content: 'New Block' };
         if (!parentId) { updateStructure([...(config.launcherStructure || []), nb]); }
@@ -528,7 +744,7 @@ export default function AdvancedWidgetEditor({ config, onChange }: { config: Wid
     };
 
     // ── Chat Builder CRUD ──
-    const updateChatStructure = (s: ChatBlock[]) => onChange({ ...config, chatStructure: s, chatMode: 'advanced' });
+    const updateChatStructure = (s: ChatBlock[]) => pushHistory({ ...config, chatStructure: s, chatMode: 'advanced' });
 
     const updateChatBlock = (id: string, updates: Partial<ChatBlock>) => {
         const rec = (blocks: ChatBlock[]): ChatBlock[] =>
@@ -541,6 +757,18 @@ export default function AdvancedWidgetEditor({ config, onChange }: { config: Wid
             blocks.filter(b => b.id !== id).map(b => !b.children?.length ? b : { ...b, children: rec(b.children!).length ? rec(b.children!) : undefined });
         updateChatStructure(rec(config.chatStructure || []));
         if (selectedChatBlockId === id) setSelectedChatBlockId(null);
+    };
+
+    const duplicateChatBlock = (id: string) => {
+        const rec = (blocks: ChatBlock[]): ChatBlock[] => {
+            const result: ChatBlock[] = [];
+            for (const b of blocks) {
+                result.push(b.children ? { ...b, children: rec(b.children) } : b);
+                if (b.id === id) result.push(cloneChatBlock(b));
+            }
+            return result;
+        };
+        updateChatStructure(rec(config.chatStructure || []));
     };
 
     const addChatBlock = (parentId: string | null, type: ChatBlock['type']) => {
@@ -615,6 +843,18 @@ export default function AdvancedWidgetEditor({ config, onChange }: { config: Wid
                     ))}
                 </div>
 
+                {/* Undo/Redo in toolbar */}
+                <div className="flex items-center gap-1 ml-2">
+                    <button onClick={undo} disabled={!canUndo} title="Undo (Cmd+Z)"
+                        className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/40 disabled:opacity-30 disabled:cursor-not-allowed transition-all">
+                        <RemixIcons.RiArrowGoBackLine size={14} />
+                    </button>
+                    <button onClick={redo} disabled={!canRedo} title="Redo (Cmd+Shift+Z)"
+                        className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/40 disabled:opacity-30 disabled:cursor-not-allowed transition-all">
+                        <RemixIcons.RiArrowGoForwardLine size={14} />
+                    </button>
+                </div>
+
                 {activeTab === 'launcher' && (
                     <div className="flex items-center gap-2">
                         <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Templates</span>
@@ -649,7 +889,7 @@ export default function AdvancedWidgetEditor({ config, onChange }: { config: Wid
                                     <SortableContext items={config.launcherStructure.map(b => b.id)} strategy={verticalListSortingStrategy}>
                                         {config.launcherStructure.map(block => (
                                             <StructureItem key={block.id} block={block} selectedBlockId={selectedBlockId}
-                                                onSelectBlock={setSelectedBlockId} onDeleteBlock={deleteBlock} />
+                                                onSelectBlock={setSelectedBlockId} onDeleteBlock={deleteBlock} onDuplicateBlock={duplicateBlock} />
                                         ))}
                                     </SortableContext>
                                 </DndContext>
@@ -685,7 +925,7 @@ export default function AdvancedWidgetEditor({ config, onChange }: { config: Wid
                         <div className="p-3 border-b border-border/20 flex justify-between items-center shrink-0">
                             <h3 className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest">Chat Blocks</h3>
                             {(config.chatStructure && config.chatStructure.length > 0) && (
-                                <button onClick={() => { if (confirm('Clear all chat blocks and start over?')) { onChange({ ...config, chatStructure: [], chatMode: 'advanced' }); setSelectedChatBlockId(null); } }}
+                                <button onClick={() => { if (confirm('Clear all chat blocks and start over?')) { pushHistory({ ...config, chatStructure: [], chatMode: 'advanced' }); setSelectedChatBlockId(null); } }}
                                     className="text-[10px] font-semibold text-red-500 hover:bg-red-500/10 px-2.5 py-1.5 border border-transparent hover:border-red-500/20 rounded-lg transition-colors flex items-center gap-1">
                                     <RemixIcons.RiDeleteBinLine size={12} /> Clear
                                 </button>
@@ -700,7 +940,7 @@ export default function AdvancedWidgetEditor({ config, onChange }: { config: Wid
                                         <SortableContext items={config.chatStructure.map(b => b.id)} strategy={verticalListSortingStrategy}>
                                             {config.chatStructure.map(block => (
                                                 <ChatStructureItem key={block.id} block={block} selectedChatBlockId={selectedChatBlockId}
-                                                    onSelectBlock={setSelectedChatBlockId} onDeleteBlock={deleteChatBlock} />
+                                                    onSelectBlock={setSelectedChatBlockId} onDeleteBlock={deleteChatBlock} onDuplicateBlock={duplicateChatBlock} />
                                             ))}
                                         </SortableContext>
                                     </DndContext>
