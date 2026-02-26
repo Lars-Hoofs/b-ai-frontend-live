@@ -247,7 +247,7 @@ function WidgetEditor() {
   );
 
   return (
-    <div className="fixed inset-0 flex flex-col bg-background" style={{ marginLeft: 'var(--sidebar-width, 256px)', top: '4rem' }}>
+    <div className="fixed inset-0 flex flex-col bg-background">
       {/* Header */}
       <div className="bg-card/80 backdrop-blur-sm border-b border-border/30 px-5 py-3 flex items-center justify-between flex-shrink-0 h-16">
         <div className="flex items-center gap-4">

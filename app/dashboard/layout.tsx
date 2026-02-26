@@ -5,7 +5,7 @@ import { Topbar } from '@/components/dashboard/topbar';
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { WorkspaceProvider } from '@/contexts/WorkspaceContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 
 export default function DashboardLayout({
   children,
@@ -15,6 +15,7 @@ export default function DashboardLayout({
   const [collapsed, setCollapsed] = useState(false);
   const { user, loading } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
   const hasRedirected = useRef(false);
 
   useEffect(() => {
@@ -53,21 +54,29 @@ export default function DashboardLayout({
           }}
         />
 
-        <Sidebar collapsed={collapsed} onToggle={() => setCollapsed((s) => !s)} />
-        <div
-          className="transition-all duration-200 relative z-10"
-          style={{
-            marginLeft: collapsed ? '80px' : '256px',
-            '--sidebar-width': collapsed ? '80px' : '256px'
-          } as React.CSSProperties}
-        >
-          <Topbar />
-          <main className="min-h-[calc(100vh-4rem)] p-6">
-            <div className="max-w-[1600px] mx-auto">
-              {children}
-            </div>
+        {pathname?.includes('/widgets/editor') ? (
+          <main className="h-screen w-screen overflow-hidden">
+            {children}
           </main>
-        </div>
+        ) : (
+          <>
+            <Sidebar collapsed={collapsed} onToggle={() => setCollapsed((s) => !s)} />
+            <div
+              className="transition-all duration-200 relative z-10"
+              style={{
+                marginLeft: collapsed ? '80px' : '256px',
+                '--sidebar-width': collapsed ? '80px' : '256px'
+              } as React.CSSProperties}
+            >
+              <Topbar />
+              <main className="min-h-[calc(100vh-4rem)] p-6">
+                <div className="max-w-[1600px] mx-auto">
+                  {children}
+                </div>
+              </main>
+            </div>
+          </>
+        )}
       </div>
     </WorkspaceProvider>
   );
