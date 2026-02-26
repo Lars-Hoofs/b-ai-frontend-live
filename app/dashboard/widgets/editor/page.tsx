@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import AdvancedWidgetEditor, { WidgetConfig } from '@/components/widgets/AdvancedWidgetEditor';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
 import { widgetAPI, agentAPI } from '@/lib/api';
-import { RiArrowLeftLine, RiSaveLine } from '@remixicon/react';
+import { RiArrowLeftLine, RiSaveLine, RiFullscreenLine, RiFullscreenExitLine } from '@remixicon/react';
 
 const DEFAULT_CONFIG: WidgetConfig = {
   name: 'My New Widget',
@@ -40,6 +40,27 @@ function WidgetEditor() {
   const [agents, setAgents] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    const onFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', onFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', onFullscreenChange);
+  }, []);
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(err => {
+        console.error(`Error attempting to enable fullscreen: ${err.message}`);
+      });
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      }
+    }
+  };
 
   useEffect(() => {
     if (selectedWorkspace) {
@@ -269,11 +290,18 @@ function WidgetEditor() {
           </div>
         </div>
 
-        <button onClick={handleSave} disabled={isSaving}
-          className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-primary to-primary/90 text-primary-foreground rounded-xl hover:shadow-lg hover:shadow-primary/20 transition-all font-semibold text-sm disabled:opacity-50">
-          <RiSaveLine size={18} />
-          {isSaving ? 'Saving...' : 'Save Changes'}
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={toggleFullscreen}
+            className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-xl transition-colors"
+            title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}>
+            {isFullscreen ? <RiFullscreenExitLine size={20} /> : <RiFullscreenLine size={20} />}
+          </button>
+          <button onClick={handleSave} disabled={isSaving}
+            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-primary to-primary/90 text-primary-foreground rounded-xl hover:shadow-lg hover:shadow-primary/20 transition-all font-semibold text-sm disabled:opacity-50">
+            <RiSaveLine size={18} />
+            {isSaving ? 'Saving...' : 'Save Changes'}
+          </button>
+        </div>
       </div>
 
       {/* Editor */}
