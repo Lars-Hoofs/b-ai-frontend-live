@@ -12,8 +12,9 @@ export interface LauncherBlock {
     linkUrl?: string;
     hoverStyle?: React.CSSProperties;
     mobileHidden?: boolean;
-    splitRatio?: number; // e.g., 30 for 30/70 split
+    splitRatio?: number;
     statusType?: 'online' | 'offline' | 'away';
+    animation?: { type: string; duration: number; delay: number; easing: string; trigger: string; repeat: number; };
 }
 
 // --- Chat Block ---
@@ -33,6 +34,7 @@ export interface ChatBlock {
     mobileHidden?: boolean;
     splitRatio?: number;
     statusType?: 'online' | 'offline' | 'away';
+    animation?: { type: string; duration: number; delay: number; easing: string; trigger: string; repeat: number; };
 }
 
 // --- Full Widget Config ---
