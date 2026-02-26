@@ -432,6 +432,29 @@ export default function AdvancedWidgetEditor({ config, onChange }: { config: Wid
         { id: 'chat-settings' as const, label: 'Settings', icon: <RemixIcons.RiSettings4Line size={15} /> },
     ];
 
+    const getLauncherTarget = (): LauncherBlock | null => {
+        if (!selectedBlockId) return null;
+        const find = (blocks: LauncherBlock[]): LauncherBlock | null => {
+            for (const b of blocks) { if (b.id === selectedBlockId) return b; if (b.children) { const f = find(b.children); if (f) return f; } } return null;
+        }
+        const t = find(config.launcherStructure || []);
+        if (t && ['container', 'row', 'column'].includes(t.type)) return t;
+        return null;
+    };
+    const launcherTarget = getLauncherTarget();
+    const launcherIsEmpty = !config.launcherStructure || config.launcherStructure.length === 0;
+
+    const getChatTarget = (): ChatBlock | null => {
+        if (!selectedChatBlockId) return null;
+        const find = (blocks: ChatBlock[]): ChatBlock | null => {
+            for (const b of blocks) { if (b.id === selectedChatBlockId) return b; if (b.children) { const f = find(b.children); if (f) return f; } } return null;
+        }
+        const t = find(config.chatStructure || []);
+        if (t && ['header', 'messages', 'input', 'container'].includes(t.type)) return t;
+        return null;
+    };
+    const chatTarget = getChatTarget();
+
     return (
         <div className="h-full flex flex-col bg-background text-foreground overflow-hidden border border-border/30 rounded-2xl shadow-xl">
             {/* ── Tab Bar ── */}
@@ -470,19 +493,10 @@ export default function AdvancedWidgetEditor({ config, onChange }: { config: Wid
                     <div className="border-r border-border/20 bg-muted/5 flex flex-col min-h-0">
                         <div className="p-3 border-b border-border/20 flex justify-between items-center shrink-0">
                             <h3 className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest">Layers</h3>
-                            <button onClick={() => {
-                                let targetParentId = null;
-                                if (selectedBlockId) {
-                                    const find = (blocks: LauncherBlock[]): LauncherBlock | null => {
-                                        for (const b of blocks) { if (b.id === selectedBlockId) return b; if (b.children) { const f = find(b.children); if (f) return f; } } return null;
-                                    }
-                                    const t = find(config.launcherStructure || []);
-                                    if (t && ['container', 'row', 'column'].includes(t.type)) { targetParentId = t.id; }
-                                }
-                                addBlock(targetParentId);
-                            }}
-                                className="text-[10px] font-semibold bg-primary/10 text-primary border border-primary/20 px-2.5 py-1.5 rounded-lg hover:bg-primary/20 flex items-center gap-1 transition-colors">
-                                <RemixIcons.RiAddLine size={12} /> Add
+                            <button onClick={() => addBlock(launcherTarget ? launcherTarget.id : null)}
+                                disabled={!launcherIsEmpty && !launcherTarget}
+                                className="text-[10px] font-semibold bg-primary/10 text-primary border border-primary/20 px-2.5 py-1.5 rounded-lg hover:bg-primary/20 flex items-center gap-1 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                                <RemixIcons.RiAddLine size={12} /> Add {launcherTarget ? `to ${launcherTarget.type}` : launcherIsEmpty ? 'Root' : ''}
                             </button>
                         </div>
                         <div className="flex-1 overflow-y-auto p-2 space-y-0.5">
@@ -559,32 +573,26 @@ export default function AdvancedWidgetEditor({ config, onChange }: { config: Wid
                                             ))}
                                         </SortableContext>
                                     </DndContext>
-                                    <div className="pt-3 mt-2 border-t border-border/20">
-                                        <label className="text-[9px] text-muted-foreground uppercase font-bold tracking-widest mb-1.5 block">Add Block</label>
-                                        <div className="grid grid-cols-2 gap-1">
-                                            {(['header', 'messages', 'input', 'container', 'text', 'button', 'divider', 'branding', 'icon', 'image'] as const).map(type => (
-                                                <button key={type} onClick={() => {
-                                                    let targetParentId = null;
-                                                    if (selectedChatBlockId) {
-                                                        const findContainer = (blocks: ChatBlock[]): ChatBlock | null => {
-                                                            for (const b of blocks) {
-                                                                if (b.id === selectedChatBlockId) return b;
-                                                                if (b.children) { const f = findContainer(b.children); if (f) return f; }
-                                                            }
-                                                            return null;
-                                                        }
-                                                        const target = findContainer(config.chatStructure || []);
-                                                        if (target && ['header', 'messages', 'input', 'container'].includes(target.type)) {
-                                                            targetParentId = target.id;
-                                                        }
-                                                    }
-                                                    addChatBlock(targetParentId, type);
-                                                }}
-                                                    className="px-2 py-1.5 text-[10px] font-medium bg-card/50 border border-border/30 hover:bg-primary/5 hover:border-primary/20 rounded-lg transition-all capitalize">
-                                                    {type}
-                                                </button>
-                                            ))}
+                                    <div className="pt-3 mt-2 border-t border-border/20 space-y-2">
+                                        <div className="flex justify-between items-center">
+                                            <label className="text-[9px] text-muted-foreground uppercase font-bold tracking-widest block">Add Block</label>
+                                            {chatTarget && <span className="text-[9px] text-primary bg-primary/10 px-1.5 py-0.5 rounded font-medium">To {chatTarget.type}</span>}
                                         </div>
+                                        {chatTarget ? (
+                                            <div className="grid grid-cols-2 gap-1">
+                                                {(['header', 'messages', 'input', 'container', 'text', 'button', 'divider', 'branding', 'icon', 'image'] as const).map(type => (
+                                                    <button key={type} onClick={() => addChatBlock(chatTarget.id, type)}
+                                                        className="px-2 py-1.5 text-[10px] font-medium bg-card/50 border border-border/30 hover:bg-primary/5 hover:border-primary/20 rounded-lg transition-all capitalize">
+                                                        {type}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="text-center p-3 border border-dashed border-border/30 rounded-lg bg-muted/10">
+                                                <RemixIcons.RiCursorLine size={18} className="mx-auto mb-1 opacity-30" />
+                                                <p className="text-[10px] text-muted-foreground/70">Select a container block to insert new items</p>
+                                            </div>
+                                        )}
                                     </div>
                                 </>
                             ) : (
