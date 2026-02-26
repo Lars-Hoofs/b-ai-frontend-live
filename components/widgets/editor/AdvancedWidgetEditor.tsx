@@ -335,11 +335,13 @@ export default function AdvancedWidgetEditor({ config, onChange }: { config: Wid
         if (!over || active.id === over.id) return;
         const ac = findContainer(active.id as string, config.launcherStructure || []);
         const oc = findContainer(over.id as string, config.launcherStructure || []);
-        if (ac && oc && ac === oc) {
+        if (ac && oc) {
             const oi = ac.findIndex(b => b.id === active.id), ni = oc.findIndex(b => b.id === over.id);
             const ns = JSON.parse(JSON.stringify(config.launcherStructure));
-            const fc = findContainer(active.id as string, ns)!;
-            const [moved] = fc.splice(oi, 1); fc.splice(ni, 0, moved);
+            const fac = findContainer(active.id as string, ns)!;
+            const foc = findContainer(over.id as string, ns)!;
+            const [moved] = fac.splice(oi, 1);
+            foc.splice(ni, 0, moved);
             updateStructure(ns);
         }
     };
@@ -357,11 +359,13 @@ export default function AdvancedWidgetEditor({ config, onChange }: { config: Wid
         if (!over || active.id === over.id) return;
         const ac = findChatContainer(active.id as string, config.chatStructure || []);
         const oc = findChatContainer(over.id as string, config.chatStructure || []);
-        if (ac && oc && ac === oc) {
+        if (ac && oc) {
             const oi = ac.findIndex(b => b.id === active.id), ni = oc.findIndex(b => b.id === over.id);
             const ns = JSON.parse(JSON.stringify(config.chatStructure));
-            const fc = findChatContainer(active.id as string, ns)!;
-            const [moved] = fc.splice(oi, 1); fc.splice(ni, 0, moved);
+            const fac = findChatContainer(active.id as string, ns)!;
+            const foc = findChatContainer(over.id as string, ns)!;
+            const [moved] = fac.splice(oi, 1);
+            foc.splice(ni, 0, moved);
             updateChatStructure(ns);
         }
     };
@@ -466,7 +470,17 @@ export default function AdvancedWidgetEditor({ config, onChange }: { config: Wid
                     <div className="border-r border-border/20 bg-muted/5 flex flex-col min-h-0">
                         <div className="p-3 border-b border-border/20 flex justify-between items-center shrink-0">
                             <h3 className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest">Layers</h3>
-                            <button onClick={() => addBlock(null)}
+                            <button onClick={() => {
+                                let targetParentId = null;
+                                if (selectedBlockId) {
+                                    const find = (blocks: LauncherBlock[]): LauncherBlock | null => {
+                                        for (const b of blocks) { if (b.id === selectedBlockId) return b; if (b.children) { const f = find(b.children); if (f) return f; } } return null;
+                                    }
+                                    const t = find(config.launcherStructure || []);
+                                    if (t && ['container', 'row', 'column'].includes(t.type)) { targetParentId = t.id; }
+                                }
+                                addBlock(targetParentId);
+                            }}
                                 className="text-[10px] font-semibold bg-primary/10 text-primary border border-primary/20 px-2.5 py-1.5 rounded-lg hover:bg-primary/20 flex items-center gap-1 transition-colors">
                                 <RemixIcons.RiAddLine size={12} /> Add
                             </button>
@@ -549,7 +563,23 @@ export default function AdvancedWidgetEditor({ config, onChange }: { config: Wid
                                         <label className="text-[9px] text-muted-foreground uppercase font-bold tracking-widest mb-1.5 block">Add Block</label>
                                         <div className="grid grid-cols-2 gap-1">
                                             {(['header', 'messages', 'input', 'container', 'text', 'button', 'divider', 'branding', 'icon', 'image'] as const).map(type => (
-                                                <button key={type} onClick={() => addChatBlock(null, type)}
+                                                <button key={type} onClick={() => {
+                                                    let targetParentId = null;
+                                                    if (selectedChatBlockId) {
+                                                        const findContainer = (blocks: ChatBlock[]): ChatBlock | null => {
+                                                            for (const b of blocks) {
+                                                                if (b.id === selectedChatBlockId) return b;
+                                                                if (b.children) { const f = findContainer(b.children); if (f) return f; }
+                                                            }
+                                                            return null;
+                                                        }
+                                                        const target = findContainer(config.chatStructure || []);
+                                                        if (target && ['header', 'messages', 'input', 'container'].includes(target.type)) {
+                                                            targetParentId = target.id;
+                                                        }
+                                                    }
+                                                    addChatBlock(targetParentId, type);
+                                                }}
                                                     className="px-2 py-1.5 text-[10px] font-medium bg-card/50 border border-border/30 hover:bg-primary/5 hover:border-primary/20 rounded-lg transition-all capitalize">
                                                     {type}
                                                 </button>
@@ -567,8 +597,16 @@ export default function AdvancedWidgetEditor({ config, onChange }: { config: Wid
                     </div>
 
                     {/* CENTER — Chat Preview */}
-                    <div className="bg-gradient-to-br from-muted/10 to-background flex items-center justify-center p-6 overflow-auto">
-                        <div className="w-full max-w-md"><InteractiveChatPreview config={config} isOpen={true} setIsOpen={() => { }} isPreview={true} /></div>
+                    <div className="bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100 dark:from-zinc-900 dark:via-zinc-800 dark:to-zinc-900 relative flex items-center justify-center overflow-hidden">
+                        <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.06]" style={{ backgroundImage: 'radial-gradient(circle, #888 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
+                        <div className="absolute inset-0 pointer-events-none">
+                            <div className="absolute inset-0 pointer-events-auto">
+                                <InteractiveChatPreview config={config} isOpen={true} setIsOpen={() => { }} isPreview={true} />
+                            </div>
+                        </div>
+                        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-background/60 backdrop-blur-lg border border-border/30 px-3.5 py-1.5 rounded-full shadow-lg text-[10px] text-muted-foreground flex items-center gap-2 font-medium">
+                            <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" /> Live Preview
+                        </div>
                     </div>
 
                     {/* RIGHT — Chat Block Properties */}
