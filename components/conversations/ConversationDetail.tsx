@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { chatAPI } from '@/lib/api';
 import { formatTime } from '@/lib/date-utils';
 import { AssignModal } from './AssignModal';
-import { 
+import {
   RiCloseLine,
   RiSendPlaneLine,
   RiUserLine,
@@ -80,10 +80,10 @@ export function ConversationDetail({
   useEffect(() => {
     // Initial load with loader
     loadMessages(true);
-    
+
     // Poll for new messages every 2 seconds without showing loader
     const interval = setInterval(() => loadMessages(false), 2000);
-    
+
     return () => clearInterval(interval);
   }, [conversation.id]);
 
@@ -100,13 +100,13 @@ export function ConversationDetail({
       if (showLoader) {
         setIsLoadingMessages(true);
       }
-      
+
       const data = await chatAPI.getMessages(conversation.id);
-      
+
       if (data) {
         // Handle both array and object with messages property
         const messagesList = Array.isArray(data) ? data : (data.messages || []);
-        
+
         // Only update if there are actually changes
         if (messagesList.length !== lastMessageCountRef.current) {
           setMessages(messagesList);
@@ -115,7 +115,7 @@ export function ConversationDetail({
           // Check if content has changed (compare last message)
           const lastNewMsg = messagesList[messagesList.length - 1];
           const lastOldMsg = messages[messages.length - 1];
-          
+
           if (!lastOldMsg || lastNewMsg.id !== lastOldMsg.id || lastNewMsg.content !== lastOldMsg.content) {
             setMessages(messagesList);
           }
@@ -141,27 +141,38 @@ export function ConversationDetail({
 
     try {
       setIsSending(true);
-      
+
+      const tempId = 'temp-' + Date.now();
+
       // Optimistically add message to UI
       const tempMessage: Message = {
-        id: 'temp-' + Date.now(),
+        id: tempId,
         conversationId: conversation.id,
         content: newMessage.trim(),
         role: 'AGENT',
         createdAt: new Date().toISOString(),
+        senderId: currentUserId,
       };
       setMessages(prev => [...prev, tempMessage]);
       setNewMessage('');
-      
+
+      // We manually increment the count so the next loadMessages doesn't ignore the updated real message
+      lastMessageCountRef.current += 1;
+
       // Send to server
-      await chatAPI.sendMessage({
+      const result = await chatAPI.sendMessage({
         conversationId: conversation.id,
         content: tempMessage.content,
         role: 'AGENT',
       });
-      
-      // Reload to get real message with ID (with loader)
-      await loadMessages(true);
+
+      // If result contains the real message, replace the temp one immediately
+      if (result && result.id) {
+        setMessages(prev => prev.map(msg => msg.id === tempId ? result : msg));
+      } else {
+        // Otherwise, reload to get real message with ID
+        await loadMessages(false);
+      }
     } catch (err: any) {
       console.error('Failed to send message:', err);
       alert(err.message || 'Failed to send message');
@@ -215,11 +226,10 @@ export function ConversationDetail({
             <h2 className="text-xl font-bold text-foreground">
               Conversation #{conversation.id.slice(0, 8)}
             </h2>
-            <span className={`text-xs px-2 py-1 rounded-full ${
-              conversation.status === 'active' ? 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300' :
-              conversation.status === 'waiting' ? 'bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300' :
-              'bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300'
-            }`}>
+            <span className={`text-xs px-2 py-1 rounded-full ${conversation.status === 'active' ? 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300' :
+                conversation.status === 'waiting' ? 'bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300' :
+                  'bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300'
+              }`}>
               {conversation.status}
             </span>
           </div>
@@ -314,13 +324,12 @@ export function ConversationDetail({
                       </span>
                     </div>
                     <div
-                      className={`px-4 py-3 rounded-lg ${
-                        isUser
+                      className={`px-4 py-3 rounded-lg ${isUser
                           ? 'bg-muted text-foreground'
                           : isAgent
-                          ? 'bg-green-500 text-white'
-                          : 'bg-primary text-primary-foreground'
-                      }`}
+                            ? 'bg-green-500 text-white'
+                            : 'bg-primary text-primary-foreground'
+                        }`}
                     >
                       <p className="text-sm whitespace-pre-wrap">{message.content}</p>
                     </div>
