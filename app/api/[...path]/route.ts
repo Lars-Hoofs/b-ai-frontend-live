@@ -98,10 +98,12 @@ async function proxyRequest(request: NextRequest, pathArray: string[]) {
     const isProduction = request.url.startsWith('https://');
     console.log('[Proxy] Environment:', isProduction ? 'PRODUCTION' : 'DEVELOPMENT');
 
-    // Forward all response headers EXCEPT Set-Cookie and HSTS (in dev)
+    // Forward all response headers EXCEPT those that conflict with our NextResponse body
     response.headers.forEach((value, key) => {
       const lowerKey = key.toLowerCase();
       if (lowerKey === 'set-cookie') return;
+      if (lowerKey === 'content-encoding') return;
+      if (lowerKey === 'content-length') return;
       if (!isProduction && lowerKey === 'strict-transport-security') return;
       nextResponse.headers.set(key, value);
     });
