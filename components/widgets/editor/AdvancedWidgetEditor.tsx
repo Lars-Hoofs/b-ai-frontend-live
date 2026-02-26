@@ -147,6 +147,7 @@ function StyleEditor({ style, hoverStyle, onChange, onHoverChange }: {
             </div>
 
             <div className="space-y-2.5">
+                {/* Size */}
                 <div className="grid grid-cols-2 gap-2">
                     <div className="space-y-1">
                         <label className="text-[10px] font-bold text-muted-foreground/70 uppercase">Width</label>
@@ -160,6 +161,7 @@ function StyleEditor({ style, hoverStyle, onChange, onHoverChange }: {
                     </div>
                 </div>
 
+                {/* Spacing */}
                 <div className="grid grid-cols-2 gap-2">
                     <div className="space-y-1">
                         <label className="text-[10px] font-bold text-muted-foreground/70 uppercase">Padding</label>
@@ -167,12 +169,25 @@ function StyleEditor({ style, hoverStyle, onChange, onHoverChange }: {
                             className="w-full text-[11px] px-2 py-1.5 rounded-lg border border-border/40 bg-muted/20 focus:border-primary/40 outline-none" />
                     </div>
                     <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-muted-foreground/70 uppercase">Margin</label>
+                        <input type="text" value={current.margin || ''} onChange={e => set('margin', e.target.value)} placeholder="0"
+                            className="w-full text-[11px] px-2 py-1.5 rounded-lg border border-border/40 bg-muted/20 focus:border-primary/40 outline-none" />
+                    </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
                         <label className="text-[10px] font-bold text-muted-foreground/70 uppercase">Gap</label>
                         <input type="text" value={current.gap || ''} onChange={e => set('gap', e.target.value)} placeholder="0"
                             className="w-full text-[11px] px-2 py-1.5 rounded-lg border border-border/40 bg-muted/20 focus:border-primary/40 outline-none" />
                     </div>
+                    <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-muted-foreground/70 uppercase">Opacity</label>
+                        <input type="number" min="0" max="1" step="0.05" value={current.opacity !== undefined ? (current.opacity as number) : ''} onChange={e => set('opacity', e.target.value ? parseFloat(e.target.value) : undefined as any)} placeholder="1"
+                            className="w-full text-[11px] px-2 py-1.5 rounded-lg border border-border/40 bg-muted/20 focus:border-primary/40 outline-none" />
+                    </div>
                 </div>
 
+                {/* Colors */}
                 <div className="pt-2 border-t border-border/20 space-y-2">
                     <div className="grid grid-cols-2 gap-2">
                         <div className="space-y-1">
@@ -180,7 +195,7 @@ function StyleEditor({ style, hoverStyle, onChange, onHoverChange }: {
                             <div className="flex gap-1">
                                 <input type="color" value={(current.backgroundColor as string) || '#ffffff'} onChange={e => set('backgroundColor', e.target.value)}
                                     className="w-7 h-7 rounded-md border border-border/40 p-0 cursor-pointer" />
-                                <input type="text" value={current.backgroundColor || ''} onChange={e => set('backgroundColor', e.target.value)}
+                                <input type="text" value={(current.backgroundColor as string) || ''} onChange={e => set('backgroundColor', e.target.value)}
                                     className="flex-1 text-[11px] px-2 py-1 rounded-lg border border-border/40 bg-muted/20 outline-none" placeholder="#fff" />
                             </div>
                         </div>
@@ -189,45 +204,137 @@ function StyleEditor({ style, hoverStyle, onChange, onHoverChange }: {
                             <div className="flex gap-1">
                                 <input type="color" value={(current.color as string) || '#000000'} onChange={e => set('color', e.target.value)}
                                     className="w-7 h-7 rounded-md border border-border/40 p-0 cursor-pointer" />
-                                <input type="text" value={current.color || ''} onChange={e => set('color', e.target.value)}
+                                <input type="text" value={(current.color as string) || ''} onChange={e => set('color', e.target.value)}
                                     className="flex-1 text-[11px] px-2 py-1 rounded-lg border border-border/40 bg-muted/20 outline-none" placeholder="#000" />
                             </div>
                         </div>
                     </div>
                     <div className="space-y-1">
                         <label className="text-[10px] font-bold text-muted-foreground/70 uppercase">Border Radius</label>
-                        <input type="text" value={current.borderRadius || ''} onChange={e => set('borderRadius', e.target.value)} placeholder="8px"
+                        <input type="text" value={(current.borderRadius as string) || ''} onChange={e => set('borderRadius', e.target.value)} placeholder="8px"
                             className="w-full text-[11px] px-2 py-1.5 rounded-lg border border-border/40 bg-muted/20 focus:border-primary/40 outline-none" />
                     </div>
                 </div>
 
+                {/* Typography */}
+                <div className="pt-2 border-t border-border/20 space-y-2">
+                    <label className="text-[10px] font-bold text-muted-foreground/70 uppercase">Typography</label>
+                    <div className="grid grid-cols-2 gap-2">
+                        <div className="space-y-1">
+                            <label className="text-[10px] text-muted-foreground/60">Font Size</label>
+                            <input type="text" value={(current.fontSize as string) || ''} onChange={e => set('fontSize', e.target.value)} placeholder="14px"
+                                className="w-full text-[11px] px-2 py-1.5 rounded-lg border border-border/40 bg-muted/20 outline-none" />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-[10px] text-muted-foreground/60">Font Weight</label>
+                            <select value={(current.fontWeight as string) || ''} onChange={e => set('fontWeight', e.target.value)}
+                                className="w-full text-[11px] px-2 py-1.5 rounded-lg border border-border/40 bg-muted/20 outline-none">
+                                <option value="">Default</option>
+                                <option value="300">Light</option>
+                                <option value="400">Normal</option>
+                                <option value="500">Medium</option>
+                                <option value="600">Semibold</option>
+                                <option value="700">Bold</option>
+                                <option value="800">ExtraBold</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                        <div className="space-y-1">
+                            <label className="text-[10px] text-muted-foreground/60">Line Height</label>
+                            <input type="text" value={(current.lineHeight as string) || ''} onChange={e => set('lineHeight', e.target.value)} placeholder="1.5"
+                                className="w-full text-[11px] px-2 py-1.5 rounded-lg border border-border/40 bg-muted/20 outline-none" />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-[10px] text-muted-foreground/60">Text Align</label>
+                            <select value={(current.textAlign as string) || ''} onChange={e => set('textAlign', e.target.value)}
+                                className="w-full text-[11px] px-2 py-1.5 rounded-lg border border-border/40 bg-muted/20 outline-none">
+                                <option value="">Default</option>
+                                <option value="left">Left</option>
+                                <option value="center">Center</option>
+                                <option value="right">Right</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div className="space-y-1">
+                        <label className="text-[10px] text-muted-foreground/60">Font Family</label>
+                        <select value={(current.fontFamily as string) || ''} onChange={e => set('fontFamily', e.target.value)}
+                            className="w-full text-[11px] px-2 py-1.5 rounded-lg border border-border/40 bg-muted/20 outline-none">
+                            <option value="">Inherit</option>
+                            <option value="Inter, sans-serif">Inter</option>
+                            <option value="Roboto, sans-serif">Roboto</option>
+                            <option value="Poppins, sans-serif">Poppins</option>
+                            <option value="-apple-system, sans-serif">SF Pro</option>
+                            <option value="monospace">Monospace</option>
+                        </select>
+                    </div>
+                </div>
+
+                {/* Border & Shadow */}
+                <div className="pt-2 border-t border-border/20 space-y-2">
+                    <label className="text-[10px] font-bold text-muted-foreground/70 uppercase">Border & Shadow</label>
+                    <div className="space-y-1">
+                        <label className="text-[10px] text-muted-foreground/60">Border</label>
+                        <input type="text" value={(current.border as string) || ''} onChange={e => set('border', e.target.value)} placeholder="1px solid #ccc"
+                            className="w-full text-[11px] px-2 py-1.5 rounded-lg border border-border/40 bg-muted/20 outline-none" />
+                    </div>
+                    <div className="space-y-1">
+                        <label className="text-[10px] text-muted-foreground/60">Box Shadow</label>
+                        <input type="text" value={(current.boxShadow as string) || ''} onChange={e => set('boxShadow', e.target.value)} placeholder="0 2px 8px rgba(0,0,0,0.1)"
+                            className="w-full text-[11px] px-2 py-1.5 rounded-lg border border-border/40 bg-muted/20 outline-none" />
+                    </div>
+                </div>
+
+                {/* Flex Layout */}
                 <div className="pt-2 border-t border-border/20 space-y-2">
                     <label className="text-[10px] font-bold text-muted-foreground/70 uppercase">Flex Layout</label>
                     <div className="grid grid-cols-2 gap-2">
-                        <select value={current.display || 'block'} onChange={e => set('display', e.target.value)}
+                        <select value={(current.display as string) || 'block'} onChange={e => set('display', e.target.value)}
                             className="text-[11px] px-2 py-1.5 rounded-lg border border-border/40 bg-muted/20 outline-none">
-                            <option value="block">Block</option><option value="flex">Flex</option><option value="none">Hidden</option>
+                            <option value="block">Block</option><option value="flex">Flex</option><option value="inline-flex">Inline Flex</option><option value="inline">Inline</option><option value="none">Hidden</option>
                         </select>
-                        <select value={current.flexDirection || 'row'} onChange={e => set('flexDirection', e.target.value)}
-                            className="text-[11px] px-2 py-1.5 rounded-lg border border-border/40 bg-muted/20 outline-none" disabled={current.display !== 'flex'}>
-                            <option value="row">Row</option><option value="column">Column</option>
+                        <select value={(current.flexDirection as string) || 'row'} onChange={e => set('flexDirection', e.target.value)}
+                            className="text-[11px] px-2 py-1.5 rounded-lg border border-border/40 bg-muted/20 outline-none">
+                            <option value="row">Row →</option><option value="column">Column ↓</option><option value="row-reverse">Row ←</option><option value="column-reverse">Column ↑</option>
                         </select>
                     </div>
                     <div className="grid grid-cols-2 gap-2">
-                        <select value={current.alignItems || 'stretch'} onChange={e => set('alignItems', e.target.value)}
-                            className="text-[11px] px-2 py-1.5 rounded-lg border border-border/40 bg-muted/20 outline-none" disabled={current.display !== 'flex'}>
-                            <option value="stretch">Align: Stretch</option><option value="center">Align: Center</option><option value="flex-start">Align: Start</option><option value="flex-end">Align: End</option>
+                        <select value={(current.alignItems as string) || ''} onChange={e => set('alignItems', e.target.value)}
+                            className="text-[11px] px-2 py-1.5 rounded-lg border border-border/40 bg-muted/20 outline-none">
+                            <option value="">Align: Auto</option><option value="stretch">Stretch</option><option value="center">Center</option><option value="flex-start">Start</option><option value="flex-end">End</option>
                         </select>
-                        <select value={current.justifyContent || 'flex-start'} onChange={e => set('justifyContent', e.target.value)}
-                            className="text-[11px] px-2 py-1.5 rounded-lg border border-border/40 bg-muted/20 outline-none" disabled={current.display !== 'flex'}>
-                            <option value="flex-start">Justify: Start</option><option value="center">Justify: Center</option><option value="space-between">Justify: Between</option><option value="flex-end">Justify: End</option>
+                        <select value={(current.justifyContent as string) || ''} onChange={e => set('justifyContent', e.target.value)}
+                            className="text-[11px] px-2 py-1.5 rounded-lg border border-border/40 bg-muted/20 outline-none">
+                            <option value="">Justify: Auto</option><option value="flex-start">Start</option><option value="center">Center</option><option value="space-between">Between</option><option value="flex-end">End</option>
                         </select>
+                    </div>
+                </div>
+
+                {/* Misc */}
+                <div className="pt-2 border-t border-border/20 space-y-2">
+                    <div className="grid grid-cols-2 gap-2">
+                        <div className="space-y-1">
+                            <label className="text-[10px] font-bold text-muted-foreground/70 uppercase">Overflow</label>
+                            <select value={(current.overflow as string) || ''} onChange={e => set('overflow', e.target.value)}
+                                className="w-full text-[11px] px-2 py-1.5 rounded-lg border border-border/40 bg-muted/20 outline-none">
+                                <option value="">Default</option><option value="hidden">Hidden</option><option value="auto">Auto</option><option value="scroll">Scroll</option>
+                            </select>
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-[10px] font-bold text-muted-foreground/70 uppercase">Cursor</label>
+                            <select value={(current.cursor as string) || ''} onChange={e => set('cursor', e.target.value)}
+                                className="w-full text-[11px] px-2 py-1.5 rounded-lg border border-border/40 bg-muted/20 outline-none">
+                                <option value="">Default</option><option value="pointer">Pointer</option><option value="text">Text</option><option value="not-allowed">Disabled</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     );
 }
+
+
 
 // ─── Properties Panel ────────────────────────────────────────────────
 function PropertiesPanel({ blockId, config, onUpdateBlock }: {
