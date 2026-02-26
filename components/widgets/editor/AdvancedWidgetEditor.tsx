@@ -540,25 +540,12 @@ export default function AdvancedWidgetEditor({ config, onChange }: { config: Wid
                     <div className="border-r border-border/20 bg-muted/5 flex flex-col min-h-0">
                         <div className="p-3 border-b border-border/20 flex justify-between items-center shrink-0">
                             <h3 className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest">Chat Blocks</h3>
-                            <button onClick={() => {
-                                const ns = config.chatStructure?.length ? config.chatStructure : DEFAULT_CHAT_STRUCTURE;
-                                onChange({ ...config, chatStructure: ns, chatMode: 'advanced' });
-                            }} className="text-[10px] font-semibold bg-primary/10 text-primary border border-primary/20 px-2.5 py-1.5 rounded-lg hover:bg-primary/20 flex items-center gap-1">
-                                <RemixIcons.RiAddLine size={12} /> Init
-                            </button>
-                        </div>
-
-                        {/* Templates */}
-                        <div className="p-2 border-b border-border/20 shrink-0">
-                            <label className="text-[9px] text-muted-foreground uppercase font-bold tracking-widest mb-1.5 block">Templates</label>
-                            <div className="grid grid-cols-2 gap-1">
-                                {CHAT_TEMPLATES.map(t => (
-                                    <button key={t.id} onClick={() => { if (confirm(`Load "${t.name}"?`)) { onChange({ ...config, chatStructure: t.structure as ChatBlock[], chatMode: 'advanced' }); if (t.structure.length) setSelectedChatBlockId(t.structure[0].id); } }}
-                                        className="px-2 py-1.5 text-[10px] font-medium bg-card/50 border border-border/30 hover:bg-primary/5 hover:border-primary/20 rounded-lg transition-all" title={t.description}>
-                                        {t.name}
-                                    </button>
-                                ))}
-                            </div>
+                            {(config.chatStructure && config.chatStructure.length > 0) && (
+                                <button onClick={() => { if (confirm('Clear all chat blocks and start over?')) { onChange({ ...config, chatStructure: [], chatMode: 'advanced' }); setSelectedChatBlockId(null); } }}
+                                    className="text-[10px] font-semibold text-red-500 hover:bg-red-500/10 px-2.5 py-1.5 border border-transparent hover:border-red-500/20 rounded-lg transition-colors flex items-center gap-1">
+                                    <RemixIcons.RiDeleteBinLine size={12} /> Clear
+                                </button>
+                            )}
                         </div>
 
                         {/* Structure list */}
@@ -596,9 +583,28 @@ export default function AdvancedWidgetEditor({ config, onChange }: { config: Wid
                                     </div>
                                 </>
                             ) : (
-                                <div className="text-center text-muted-foreground/50 text-xs py-12">
-                                    <RemixIcons.RiLayoutMasonryLine size={28} className="mx-auto mb-2 opacity-30" />
-                                    <p className="text-[11px]">Click "Init" or load a template</p>
+                                <div className="flex flex-col gap-3 px-2 py-4">
+                                    <button onClick={() => {
+                                        const nb: ChatBlock = { id: nanoid(), type: 'container', style: { flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: '#f9fafb', padding: '16px', gap: '8px', minHeight: '100px', borderRadius: '16px' } };
+                                        onChange({ ...config, chatStructure: [nb], chatMode: 'advanced' });
+                                        setSelectedChatBlockId(nb.id);
+                                    }} className="py-2.5 px-3 bg-primary text-primary-foreground text-[11px] font-semibold rounded-lg hover:bg-primary/90 flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-lg shadow-primary/20">
+                                        <RemixIcons.RiLayoutMasonryLine size={14} /> Start Blank Container
+                                    </button>
+
+                                    <div className="relative my-2">
+                                        <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-border/30"></div></div>
+                                        <div className="relative flex justify-center"><span className="bg-muted/5 px-2 text-[9px] text-muted-foreground uppercase font-bold tracking-widest">Or Load Template</span></div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-1.5">
+                                        {CHAT_TEMPLATES.map(t => (
+                                            <button key={t.id} onClick={() => { onChange({ ...config, chatStructure: t.structure as ChatBlock[], chatMode: 'advanced' }); if (t.structure.length) setSelectedChatBlockId(t.structure[0].id); }}
+                                                className="px-2 py-2 text-[10px] font-semibold bg-card border border-border/50 hover:bg-primary/5 hover:border-primary/30 hover:text-primary rounded-lg transition-all text-left flex flex-col gap-0.5" title={t.description}>
+                                                <span>{t.name}</span>
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
                             )}
                         </div>
